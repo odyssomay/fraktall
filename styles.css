@@ -7,7 +7,7 @@ html {
 	background: -webkit-gradient(linear, left top, left bottom, from(#CCC), to(#777));
 }
 
-h1, h2 {
+h1, h2, h3 {
 	font-weight: lighter;
 	margin: 0;
 	float: left;
@@ -22,6 +22,12 @@ h2 {
 	margin-left: 10px;
 	margin-top: 5px;
 	font-size: 1.1em;
+}
+
+h3 {
+	float: none;
+	text-align: center;
+	font-size: 3em;
 }
 
 #header {
@@ -51,4 +57,19 @@ canvas {
 	width: 900px;
 	border-radius: 20px;
 	background: black;
+}
+
+#footer a {
+	float: right;
+}
+
+a {
+	margin-left: 20px;
+	text-decoration: none;
+	font-weight: bold;
+	color: #000;
+}
+
+a:hover { 
+	color: #333;
 }
