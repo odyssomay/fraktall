@@ -34,10 +34,10 @@ h3 {
 	margin-top: 0.5em;
 	overflow: auto;
 }
+
 #footer {
 	margin-left: 20px;
 	margin-top: 8px;
-
 }
 
 canvas {
@@ -72,4 +72,10 @@ a {
 
 a:hover { 
 	color: #333;
+}
+
+#fb {
+	display: inline;
+	position: relative;
+	top: -5px;
 }
