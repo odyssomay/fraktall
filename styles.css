@@ -77,3 +77,10 @@ a:hover {
 	display: inline;
 	position: absolute;
 }
+
+#zoom_text {
+	height: 0;
+	width: 100%;
+	text-align: center;
+}
+
