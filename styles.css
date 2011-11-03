@@ -1,0 +1,49 @@
+html {
+	font-family: 'LindenHillRegular';
+	font-weight: lighter;
+	height: 100%;
+	background: #CCC;
+	background: -moz-linear-gradient(top, #CCC, #777);
+	background: -webkit-gradient(linear, left top, left bottom, from(#CCC), to(#777));
+}
+
+h1, h2 {
+	font-weight: lighter;
+	margin: 0;
+	float: left;
+}
+
+h1 {
+	margin-left: 20px;
+	font-size: 2.5em;
+}
+
+h2 {
+	margin-left: 10px;
+	margin-top: 5px;
+	font-size: 1.1em;
+}
+
+#header {
+	margin-top: 0.5em;
+	overflow: auto;
+}
+
+canvas {
+	display: block;
+	width: 900px;
+}
+
+#container {
+	display: block;
+	width: 900px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#view { 
+	border: 30px solid #666;
+	width: 900px;
+	border-radius: 20px;
+	background: black;
+}
