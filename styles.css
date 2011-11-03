@@ -76,6 +76,5 @@ a:hover {
 
 #fb {
 	display: inline;
-	position: relative;
-	top: -5px;
+	position: absolute;
 }
