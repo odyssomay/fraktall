@@ -139,9 +139,9 @@ grey_image = function() {
 	const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 	const data = imageData.data;
 	for (var i = 0; i < data.length; i += 4) {
-		data[i]   += 30;
-		data[i+1] += 30;
-		data[i+2] += 30;
+		data[i]   += 10;
+		data[i+1] += 10;
+		data[i+2] += 10;
 	}
 	ctx.putImageData(imageData, 0, 0);
 }
