@@ -29,7 +29,6 @@ function getPixel(imageData, x, y) {
 get_iteration_color = function(iteration) {
 	r = (iteration * 5) % 255;
 	g = Math.log(iteration) % 255;
-	//g = Math.pow(iteration, 3) % 255;
 	b = iteration % 255;
 	return [r,g,b];
 }
@@ -40,6 +39,46 @@ scale_x = function(x) {
 
 scale_y = function(y) {
 	return ((canvas.height - y) - canvas.height / 2) / scale + center[1];
+}
+
+/*
+ * Distance estimator
+ */
+complex_number = function(a,b) {
+	obj = {a: a, b: b};
+
+	obj.mult = function(num) {
+		return complex_number(a * num.a - b * num.b,
+		                      b * num.a + a * num.b);
+	}
+	obj.add = function(num) {
+		return complex_number(a + num.a, b + num.b);
+	}
+	obj.magnitude = function() {
+		return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+	}
+	return obj;
+}
+
+distance_estimator = function(z_a, z_b) {
+	var iterations = 0;
+	var z = complex_number(scale_x(z_a), scale_y(z_b));
+	var c = z;
+	var dz = complex_number(0, 0);
+	var z2;
+
+	const escape_radius = 2.0;
+
+	var still_iterating = true
+	while (z.magnitude() < escape_radius && iterations < max_iteration) {
+		z2 = z.mult(z).add(c);
+		dz = complex_number(2, 0).mult(z).mult(dz).add(complex_number(1,0));
+		z = z2;
+		iterations = iterations + 1;
+	}
+	const z_mag = z.magnitude();
+	const dz_mag = dz.magnitude();
+	return Math.log(z_mag*z_mag) * z_mag / dz_mag;
 }
 
 /*
@@ -92,12 +131,17 @@ grey_image = function() {
 draw_section = function(section_x, section_y) {
 	for (x = 0; x < section_size; x++) {
 		for (y = 0; y < section_size; y++) {
-			color_raw = pixel_color(section_x + x, section_y + y);
 			var color;
+			/*d = distance_estimator(section_x + x, section_y + y);
+			if (d < 0.005)
+				color = [0,0,0];
+			else
+				color = [255,255,255];*/
+			color_raw = pixel_color(section_x + x, section_y + y);
 			if (color_raw === 'black')
 				color = [0,0,0];
 			else
-				color = get_iteration_color(color_raw);//[Math.log(color_raw),color_raw, color_raw];
+				color = get_iteration_color(color_raw);
 			setPixel(section_imageData, x, y, color[0], color[1], color[2], 0xff)
 		}
 	}
@@ -115,7 +159,6 @@ draw = function() {
 
 	busy = false;
 	const timer = setInterval(function() {
-		//console.log(busy);
 		if (!busy) {
 			busy = true;
 			if (x > x_sections) {
@@ -134,21 +177,6 @@ draw = function() {
 			busy = false;
 		}
 	}, 50);
-/*	const imageData = ctx.createImageData(canvas.width, canvas.height);
-
-	for (x = 0; x < canvas.width; x++) {
-		for (y = 0; y < canvas.height; y++) {
-			color_raw = pixel_color(x, y);
-			var color;
-			if (color_raw === 'black')
-				color = [0,0,0];
-			else
-				color = get_iteration_color(color_raw);//[Math.log(color_raw),color_raw, color_raw];
-			setPixel(imageData, x, y, color[0], color[1], color[2], 0xff)
-		}
-	}
-	ctx.putImageData(imageData, 0, 0);
-	*/
 }
 
 
