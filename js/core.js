@@ -2,8 +2,6 @@
 const canvas = document.getElementById('draw_area')
 const ctx = canvas.getContext('2d');
 
-const max_iteration = 100;
-
 var center = [-1, 0];
 var scale = 300;
 
@@ -81,10 +79,21 @@ distance_estimator = function(z_a, z_b) {
 	return Math.log(z_mag*z_mag) * z_mag / dz_mag;
 }
 
+distance_estimator_color = function(x, y) {
+	d = distance_estimator(x, y);
+	if (d < 0.005)
+		return [0,0,0];
+	else
+		return [255,255,255];
+}
+
 /*
  * Algorithm from http://en.wikipedia.org/wiki/Mandelbrot_set#For_programmers
  */
-pixel_color = function(x_raw, y_raw) {
+escape_iterations = function(x_raw, y_raw, max_iterations, old_data) {
+	if (old_data && old_data.finished)
+		return old_data;
+
 	const x0 = scale_x(x_raw);
 	const y0 = scale_y(y_raw);
 
@@ -93,29 +102,38 @@ pixel_color = function(x_raw, y_raw) {
 
 	var iteration = 0;
 
-	while (a*a + b*b < 4 && iteration < max_iteration) {
+	if (old_data) {
+		a = old_data.a;
+		b = old_data.b;
+		iteration = old_data.iteration;
+		max_iterations += iteration;
+	}
+
+	while (a*a + b*b < 4 && iteration < max_iterations) {
 		xtemp = a*a - b*b + x0;
 		b = 2*a*b + y0;
 		a = xtemp;
 		iteration = iteration + 1;
 	}
 
-	if (a*a + b*b < 4)
-		return "black";
-	else
-		return iteration;
-}
+	const result = {iteration: iteration, a: a, b: b};
 
+	if (a*a + b*b < 4)
+		result.finished = false;
+	else
+		result.finished = true;
+
+	return result;
+}
 
 const section_size = 100;
 const x_sections = canvas.width / section_size;
 const y_sections = canvas.height / section_size;
 
-const section_imageData = ctx.createImageData(section_size, section_size);
 var drawing = false;
 
 /* 
- * From http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
+ * Idea from http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
  */
 grey_image = function() {
 	const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -128,57 +146,151 @@ grey_image = function() {
 	ctx.putImageData(imageData, 0, 0);
 }
 
-draw_section = function(section_x, section_y) {
+get_data_at = function(data, x, y, width) {
+	return data[x + y*width];
+}
+
+calculate_section_rectangular = function(section_x, section_y, width, height, total_width, data) {
+	first_value = escape_iterations(section_x, section_y);
+
+	draw_all = false;
+	for (x = 0; x < width; x++) {
+		if (! (first_value == escape_iterations(section_x + x, section_y) &&
+		       first_value == escape_iterations(section_x + x, section_y + height - 1)))
+			draw_all = true;
+			break;
+	}
+
+	if (! draw_all) {
+		for (y = 0; y < height; y++) {
+			if (! (first_value == escape_iterations(section_x, section_y + y) &&
+			       first_value == escape_iterations(section_x + width - 1, section_y + y))) {
+				draw_all = true;
+				break;
+			}
+		}
+	}
+	
+	const result = [];
+	if (draw_all) {
+		const half_width = Math.floor(width / 2);
+		const half_height = Math.floor(height / 2);
+		calculate_section(section_x,              section_y,               half_width, half_height, total_width, data);
+		calculate_section(section_x + half_width, section_y,               half_width, half_height, total_width, data);
+		calculate_section(section_x,              section_y + half_height, half_width, half_height, total_width, data);
+		calculate_section(section_x + half_width, section_y + half_height, half_width, half_height, total_width, data);
+	}
+	else {
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				const g_x = x + section_x;
+				const g_y = y + section_y;
+				const index = g_x + g_y * total_width;
+				data[index] = escape_iterations(g_x, g_y);
+			}
+		}
+	}
+}
+
+calculate_section = function(section_x, section_y, max_iterations, section_data) {
+	var index;
+	const result = new Array(section_size * section_size);
+	if (! section_data)
+		section_data = [];
+	if (! max_iterations)
+		max_iterations = 50;
+	for (var x = 0; x < section_size; x++) {
+		for (var y = 0; y < section_size; y++) {
+			index = x + y * section_size;
+			result[index] = escape_iterations(section_x + x, section_y + y, max_iterations, section_data[index]);
+		}
+	}
+	return result;
+}
+
+draw_section = function(section_x, section_y, max_iterations, section_data) {
+/*	data = new Array(section_size * section_size);
+	calculate_section(section_x, section_y, section_size, section_size, section_size, data)
 	for (x = 0; x < section_size; x++) {
 		for (y = 0; y < section_size; y++) {
+			const g_x = x + section_x;
+			const g_y = y + section_y;
+			const index = g_x + g_y * section_size;
+			const iter = data[index];
+			if (iter == null)
+				color = [0,0,0];
+			else
+				color = get_iteration_color(iter);
+			setPixel(section_imageData, x, y, color[0],color[1],color[2],0xff)
+		}
+	}
+	*/
+	const calculated = calculate_section(section_x, section_y, max_iterations, section_data);
+	const section_imageData = ctx.createImageData(section_size, section_size);
+
+	var index, iter;
+	for (var x = 0; x < section_size; x++) {
+		for (var y = 0; y < section_size; y++) {
+			index = x + y * section_size;
+			iter = calculated[index];
 			var color;
-			/*d = distance_estimator(section_x + x, section_y + y);
-			if (d < 0.005)
-				color = [0,0,0];
+			if (iter.finished)
+				color = get_iteration_color(iter.iteration);
 			else
-				color = [255,255,255];*/
-			color_raw = pixel_color(section_x + x, section_y + y);
-			if (color_raw === 'black')
 				color = [0,0,0];
-			else
-				color = get_iteration_color(color_raw);
 			setPixel(section_imageData, x, y, color[0], color[1], color[2], 0xff)
 		}
 	}
 	ctx.putImageData(section_imageData, section_x, section_y);
+	return calculated;
 }
 
 /*
- * Idea from http://www.sitepoint.com/multi-threading-javascript/
+ * setInterval idea from http://www.sitepoint.com/multi-threading-javascript/
  */
+var new_draw_toggle = false;
 draw = function() {
+	const current_new_draw_toggle = new_draw_toggle;
+
+	var index;
+
+	var refine_iteration = 0;
+	var max_iterations = 100;
 	grey_image();
-	drawing = true;
 	var x = 0;
 	var y = 0;
 
+	const sections_data = new Array(x_sections * y_sections);
 	busy = false;
 	const timer = setInterval(function() {
+		if (! (new_draw_toggle === current_new_draw_toggle)) {
+			clearInterval(timer);
+			return;
+		}
 		if (!busy) {
 			busy = true;
-			if (x > x_sections) {
-				if (y > y_sections) {
-					clearInterval(timer);
-					drawing = false;
-					return;
+			if (x >= x_sections) {
+				if (y + 1 >= y_sections) {
+					x = 0;
+					y = 0;
+					refine_iteration += 1;
+					if (refine_iteration > 4) {
+						clearInterval(timer);
+						return;
+					}
 				}
 				else {
 					y += 1;
 					x = 0;
 				}
 			}
-			draw_section(x * section_size, y * section_size);
+			index = x + y * x_sections;
+			sections_data[index] = draw_section(x * section_size, y * section_size, max_iterations, sections_data[index]);
 			x += 1;
 			busy = false;
 		}
-	}, 50);
+	}, 100);
 }
-
 
 /*
  * From: http://answers.oreilly.com/topic/1929-how-to-use-the-canvas-and-draw-elements-in-html5/
@@ -204,6 +316,7 @@ function getCursorPosition(e) {
 
 canvas.onclick = function (e) {
 	if(!drawing) {
+		new_draw_toggle = ! new_draw_toggle;
 		const pos = getCursorPosition(e);
 		center = [scale_x(pos[0]), scale_y(pos[1])];
 		scale *= 3;
@@ -212,3 +325,4 @@ canvas.onclick = function (e) {
 }
 
 draw();
+
