@@ -193,13 +193,16 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, old_data) {
 	      distance_estimate = Math.log(z_mag*z_mag) * z_mag / dz_mag;
 
 	const result = {
-		distance_estimate: distance_estimate
+		distance_estimate: distance_estimate,
+		iteration: iteration,
+		escaped: escaped
 	};
 
 	if (escaped) { //(escaped || escaped_fast || orbit_found) {
+		const escape_radius = 2;
 		result.finished = true;
+		result.continuous_iteration = iteration + log2(log2(Math.sqrt(z_a * z_a + z_b * z_b))) - log2(log2(escape_radius));
 	//	if (escaped) 
-		result.iteration = iteration;
 /*		else if (escaped_fast)
 			result.iteration = iteration_fast;
 		else if (orbit_found) {
@@ -215,11 +218,66 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, old_data) {
 		result.dz_b = dz_b;
 //		result.z_a_fast = z_a_fast;
 //		result.z_b_fast = z_b_fast;
-		result.iteration = iteration;
 //		result.iteration_fast = iteration_fast;
 	}
 
 	return result;
+}
+
+pixel_color = function(pixel_obj) {
+	var color = [];
+	if (!pixel_obj.escaped)
+		color['red'] = color['green'] = color['blue'] = 0;
+	else {
+		const dwell = pixel_obj.iteration;
+		var iterations, hue, P;
+		const finalrad = dwell - pixel_obj.continuous_iteration,
+		      pixel_spacing = scale_x(1) - scale_x(0),
+		      dscale = log2(pixel_obj.distance_estimate / pixel_spacing);
+
+		if (dscale > 0)
+			value = 1.0;
+		else if (dscale > -8)
+			value = (8 + dscale) / 8;
+		else
+			value = 0;
+
+		P = Math.log(dwell) / Math.log(1e5);
+
+		if (P < 0.5) {
+			P = 1.0 - 1.5*P;
+			angle = 1 - P;
+			radius = Math.sqrt(P) 
+		} 
+		else { 
+			P = 1.5*P - 0.5;
+			angle = P;
+			radius = Math.sqrt(P) 
+		}
+
+		if ((dwell % 2) === 1) {
+			value *= 0.85;
+			radius *= 0.667;
+		}
+
+/*		const finalang = finalrad * 180 / Math.PI;
+		if (finalang > Math.PI) {
+			angle = angle + 0.02 
+		}
+		*/
+
+		angle = angle + 0.0001 * finalrad;
+		hue = angle * 5; // 10;
+		hue = hue - Math.floor(hue);
+		saturation = radius - Math.floor(radius);
+//		value = Math.max(- Math.sqrt(pixel_obj.distance_estimate) + 0.5, 0);
+
+		color = hsv2rgb(hue, saturation, 0.5);
+//		color['red'] = (pixel_obj.iteration * 5) % 255;
+//		color['green'] = (Math.log(pixel_obj.distance_estimate) * 10) % 255;
+//		color['blue'] = 0;
+	}
+	return color;
 }
 
 const section_size = 100;
@@ -238,10 +296,6 @@ grey_image = function() {
 		data[i+2] += 10;
 	}
 	ctx.putImageData(imageData, 0, 0);
-}
-
-get_data_at = function(data, x, y, width) {
-	return data[x + y*width];
 }
 
 calculate_section_rectangular = function(section_x, section_y, width, height, total_width, data) {
@@ -327,20 +381,7 @@ draw_section = function(section_x, section_y, max_iterations, section_data) {
 		for (var y = 0; y < section_size; y++) {
 			index = x + y * section_size;
 			c = calculated[index];
-			color = [];
-			if (!c.finished) //(c.distance_estimate < 1e-5)
-				color['red'] = color['green'] = color['blue'] = 255;
-			else if (c.distance_estimate < 1e-5)
-				color['red'] = color['green'] = color['blue'] = 0;
-			else {
-				iterations = c.iterations;
-				hue = (360 * Math.log(iterations) / Math.log(2)) % 360;
-				if ((iterations % 2) === 1)
-					hue = (hue + 20) % 360;
-
-				brightness = c.distance_estimate;
-				color = hsv2rgb(hue, brightness, 1);
-			}
+			color = pixel_color(c);
 			setPixel(section_imageData, x, y, color['red'], color['green'], color['blue'], 0xff)
 		}
 	}
@@ -361,7 +402,7 @@ draw = function() {
 	var index;
 
 	var refine_iteration = 0;
-	var max_iterations = 50;
+	var max_iterations = 100;
 	var x = 0;
 	var y = 0;
 
