@@ -381,22 +381,6 @@ calculate_section = function(section_x, section_y, max_iterations, section_data)
 }
 
 draw_section = function(section_x, section_y, max_iterations, section_data) {
-/*	const section_imageData = ctx.createImageData(section_size, section_size);
-	var d, color;
-	for (var x = 0; x < section_size; x++) {
-	       for (var y = 0; y < section_size; y++) {
-		       d = escape_iterations_and_distance_estimate(section_x + x, section_y + y, 500);
-		       if (d.distance_estimate < 1e-5)
-			       color = [0,0,0];
-		       else {
-			       hue = d.iterations;
-			       brightness = d.distance_estimate;
-			       color = hsv2rgb(hue, brightness, 1);
-		       }
-		       setPixel(section_imageData, x, y, color['red'], color['green'],color['blue'],0xff);
-	       }
-	} 
-	*/
 /*	data = new Array(section_size * section_size);
 	calculate_section_rectangular(section_x, section_y, section_size, section_size, section_size, data)
 	for (x = 0; x < section_size; x++) {
@@ -428,7 +412,6 @@ draw_section = function(section_x, section_y, max_iterations, section_data) {
 				color['red'] = color['green'] = color['blue'] = 0;
 			else {
 				iterations = c.iterations;
-//				hue = (360 * log2(iterations)) modulo 360 if (iterations mod 2 = 1) then hue = (hue + 20) modulo 360
 				hue = (360 * Math.log(iterations) / Math.log(2)) % 360;
 				if ((iterations % 2) === 1)
 					hue = (hue + 20) % 360;
@@ -457,11 +440,11 @@ draw = function() {
 
 	var refine_iteration = 0;
 	var max_iterations = 50;
-	grey_image();
 	var x = 0;
 	var y = 0;
 
 	const sections_data = new Array(x_sections * y_sections);
+	
 	busy = false;
 	const timer = setInterval(function() {
 		if (! (new_draw_toggle === current_new_draw_toggle)) {
@@ -522,6 +505,7 @@ canvas.onclick = function (e) {
 	const pos = getCursorPosition(e);
 	center = [scale_x(pos[0]), scale_y(pos[1])];
 	scale *= 3;
+	grey_image();	
 	draw();
 }
 
