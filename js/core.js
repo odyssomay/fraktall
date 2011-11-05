@@ -6,6 +6,16 @@ var center = [-1, 0];
 var scale = 300;
 
 /*
+ * Float comparison, from:
+ * http://support.microsoft.com/kb/69333
+ */
+float_equal = function(a, b, accuracy) {
+	if (!accuracy)
+		accuracy = 1e15;
+	return Math.abs(a - b) <= Math.abs(b) / accuracy;
+}
+
+/*
  * From http://beej.us/blog/2010/02/html5s-canvas-part-ii-pixel-manipulation/ 
  */
 function setPixel(imageData, x, y, r, g, b, a) {
@@ -39,9 +49,6 @@ scale_y = function(y) {
 	return ((canvas.height - y) - canvas.height / 2) / scale + center[1];
 }
 
-/*
- * Distance estimator
- */
 complex_number = function(a,b) {
 	obj = {a: a, b: b};
 
@@ -58,9 +65,40 @@ complex_number = function(a,b) {
 	return obj;
 }
 
-distance_estimator = function(z_a, z_b) {
-	var iterations = 0;
-	var z = complex_number(scale_x(z_a), scale_y(z_b));
+/*
+ * Distance estimator
+ * http://mrob.com/pub/muency/distanceestimator.html
+ */
+distance_estimator = function(z_a_raw, z_b_raw, max_iterations) {
+	var iterations = 0,
+	    z_a = scale_x(z_a_raw),
+	    z_b = scale_y(z_b_raw),
+	    c_a = z_a,
+	    c_b = z_b,
+	    dz_a = 0,
+	    dz_b = 0,
+	    z2_a,
+	    z2_b,
+	    z_a_new;
+
+	while (z_a * z_a + z_b * z_b < 4 && iterations < max_iterations) {
+		z_a_new = z_a * z_a - z_b * z_b + c_a;
+		z2_b = 2 * z_a * z_b + c_b;
+		z2_a = z_a_new;
+
+		dz_a = 2 * (z_a * dz_a - z_b * dz_b) + 1;
+		dz_b = 2 * (z_a * dz_b + dz_a * z_b);
+
+		z_a = z2_a;
+		z_b = z2_b;
+
+		iterations += 1;
+	}
+	const z_mag = z_a * z_a + z_b * z_b;
+	const dz_mag = dz_a * dz_a + dz_b * dz_b;
+	return Math.log(z_mag*z_mag) * z_mag / dz_mag;
+
+/*	var z = complex_number(scale_x(z_a), scale_y(z_b));
 	var c = z;
 	var dz = complex_number(0, 0);
 	var z2;
@@ -68,7 +106,7 @@ distance_estimator = function(z_a, z_b) {
 	const escape_radius = 2.0;
 
 	var still_iterating = true
-	while (z.magnitude() < escape_radius && iterations < max_iteration) {
+	while (z.magnitude() < escape_radius && iterations < max_iterations) {
 		z2 = z.mult(z).add(c);
 		dz = complex_number(2, 0).mult(z).mult(dz).add(complex_number(1,0));
 		z = z2;
@@ -77,6 +115,7 @@ distance_estimator = function(z_a, z_b) {
 	const z_mag = z.magnitude();
 	const dz_mag = dz.magnitude();
 	return Math.log(z_mag*z_mag) * z_mag / dz_mag;
+	*/
 }
 
 distance_estimator_color = function(x, y) {
@@ -85,6 +124,10 @@ distance_estimator_color = function(x, y) {
 		return [0,0,0];
 	else
 		return [255,255,255];
+}
+
+complex_magnitude = function(a, b) {
+	return a*a + b*b;
 }
 
 /*
@@ -97,31 +140,84 @@ escape_iterations = function(x_raw, y_raw, max_iterations, old_data) {
 	const x0 = scale_x(x_raw);
 	const y0 = scale_y(y_raw);
 
-	var a = 0;
-	var b = 0;
+	var z_a = 0;
+	var z_b = 0;
+
+//	var z_a_fast = z_a;
+//	var z_b_fast = z_b;
 
 	var iteration = 0;
-
+//	var iteration_fast = 0;
+	
 	if (old_data) {
-		a = old_data.a;
-		b = old_data.b;
+		z_a = old_data.z_a;
+		z_b = old_data.z_b;
+//		z_a_fast = old_data.z_a_fast;
+//		z_b_fast = old_data.z_b_fast;
 		iteration = old_data.iteration;
+//		iteration_fast = old_data.iteration_fast;
 		max_iterations += iteration;
 	}
 
-	while (a*a + b*b < 4 && iteration < max_iterations) {
-		xtemp = a*a - b*b + x0;
-		b = 2*a*b + y0;
-		a = xtemp;
-		iteration = iteration + 1;
+	var orbit_found = false;
+	var escaped = false;
+	var escaped_fast = false;
+
+	while ((! (orbit_found || escaped || escaped_fast)) && iteration < max_iterations) {
+
+		z_a_new = z_a * z_a - z_b * z_b + x0;
+		z_b = 2 * z_a * z_b + y0;
+		z_a = z_a_new;
+
+/*		for (var i = 0; i < 2; i++) {
+			z_a_fast_new = z_a_fast * z_a_fast - z_b_fast * z_b_fast + x0;
+			z_b_fast = 2 * z_a_fast * z_b_fast + y0;
+			z_a_fast = z_a_fast_new;
+		}
+*/		
+
+/*		if (float_equal(z_a, z_a_fast) && float_equal(z_b, z_b_fast)) {
+			orbit_found = true;
+			break;
+		}
+		*/
+		if (complex_magnitude(z_a, z_b) > 4) {
+			escaped = true;
+			break;
+		}
+		/*
+		else if (complex_magnitude(z_a_fast, z_b_fast) > 4) {
+			escaped_fast = true;
+			break;
+		}
+		*/
+
+		iteration += 1;
+		//iteration_fast += 1;
 	}
 
-	const result = {iteration: iteration, a: a, b: b};
+	const result = {};
 
-	if (a*a + b*b < 4)
-		result.finished = false;
-	else
+	if (escaped) { //(escaped || escaped_fast || orbit_found) {
 		result.finished = true;
+	//	if (escaped) 
+		result.iteration = iteration;
+/*		else if (escaped_fast)
+			result.iteration = iteration_fast;
+		else if (orbit_found) {
+			result.orbit_found = true;
+		}
+*/
+	}
+	else {
+		result.finished = false;
+		result.z_a = z_a;
+		result.z_b = z_b;
+//		result.z_a_fast = z_a_fast;
+//		result.z_b_fast = z_b_fast;
+		result.iteration = iteration;
+//		result.iteration_fast = iteration_fast;
+	}
 
 	return result;
 }
@@ -129,8 +225,6 @@ escape_iterations = function(x_raw, y_raw, max_iterations, old_data) {
 const section_size = 100;
 const x_sections = canvas.width / section_size;
 const y_sections = canvas.height / section_size;
-
-var drawing = false;
 
 /* 
  * Idea from http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
@@ -209,8 +303,20 @@ calculate_section = function(section_x, section_y, max_iterations, section_data)
 }
 
 draw_section = function(section_x, section_y, max_iterations, section_data) {
+	const section_imageData = ctx.createImageData(section_size, section_size);
+	var d, color;
+	for (var x = 0; x < section_size; x++) {
+	       for (var y = 0; y < section_size; y++) {
+		       d = distance_estimator(section_x + x, section_y + y, 5000);
+		       if (d < 1e-10)
+			       color = [0,0,0];
+		       else
+			       color = [255,255,255];
+		       setPixel(section_imageData, x, y, color[0], color[1],color[2],0xff);
+	       }
+	} 
 /*	data = new Array(section_size * section_size);
-	calculate_section(section_x, section_y, section_size, section_size, section_size, data)
+	calculate_section_rectangular(section_x, section_y, section_size, section_size, section_size, data)
 	for (x = 0; x < section_size; x++) {
 		for (y = 0; y < section_size; y++) {
 			const g_x = x + section_x;
@@ -225,7 +331,7 @@ draw_section = function(section_x, section_y, max_iterations, section_data) {
 		}
 	}
 	*/
-	const calculated = calculate_section(section_x, section_y, max_iterations, section_data);
+/*	const calculated = calculate_section(section_x, section_y, max_iterations, section_data);
 	const section_imageData = ctx.createImageData(section_size, section_size);
 
 	var index, iter;
@@ -234,15 +340,15 @@ draw_section = function(section_x, section_y, max_iterations, section_data) {
 			index = x + y * section_size;
 			iter = calculated[index];
 			var color;
-			if (iter.finished)
+			if (iter.finished && (! iter.orbit_found))
 				color = get_iteration_color(iter.iteration);
 			else
 				color = [0,0,0];
 			setPixel(section_imageData, x, y, color[0], color[1], color[2], 0xff)
 		}
-	}
+	}*/
 	ctx.putImageData(section_imageData, section_x, section_y);
-	return calculated;
+//	return calculated;
 }
 
 /*
@@ -253,11 +359,12 @@ draw_section = function(section_x, section_y, max_iterations, section_data) {
 var new_draw_toggle = false;
 draw = function() {
 	const current_new_draw_toggle = new_draw_toggle;
+	var current_time = (new Date()).getTime();
 
 	var index;
 
 	var refine_iteration = 0;
-	var max_iterations = 100;
+	var max_iterations = 50;
 	grey_image();
 	var x = 0;
 	var y = 0;
@@ -276,6 +383,8 @@ draw = function() {
 					x = 0;
 					y = 0;
 					refine_iteration += 1;
+					console.log('drawing took', ((new Date()).getTime() - current_time) / 1000, 'seconds');
+					current_time = (new Date()).getTime();
 					if (refine_iteration > 4) {
 						clearInterval(timer);
 						return;
@@ -317,13 +426,11 @@ function getCursorPosition(e) {
 }
 
 canvas.onclick = function (e) {
-	if(!drawing) {
-		new_draw_toggle = ! new_draw_toggle;
-		const pos = getCursorPosition(e);
-		center = [scale_x(pos[0]), scale_y(pos[1])];
-		scale *= 3;
-		draw();
-	}
+	new_draw_toggle = ! new_draw_toggle;
+	const pos = getCursorPosition(e);
+	center = [scale_x(pos[0]), scale_y(pos[1])];
+	scale *= 3;
+	draw();
 }
 
 draw();
