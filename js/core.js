@@ -247,6 +247,8 @@ draw_section = function(section_x, section_y, max_iterations, section_data) {
 
 /*
  * setInterval idea from http://www.sitepoint.com/multi-threading-javascript/
+ * Uses 'Successive Dwell Limit' explained here:
+ * http://mrob.com/pub/muency/automaticdwelllimit.html
  */
 var new_draw_toggle = false;
 draw = function() {
