@@ -112,121 +112,107 @@ complex_magnitude = function(a, b) {
 /*
  * Algorithm from http://en.wikipedia.org/wiki/Mandelbrot_set#For_programmers
  */
-calculate_pixel = function(x_raw, y_raw, max_iterations, old_data) {
-	if (old_data && old_data.finished)
-		return old_data;
+calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
+	if (data && data.finished)
+		return data;
 
-	const x0 = scale_x(x_raw);
-	const y0 = scale_y(y_raw);
-
-	var z_a = scale_x(x_raw);
-	var z_b = scale_y(y_raw);
-
-	const c_a = z_a,
-	      c_b = z_b;
-
-//	var z_a_fast = z_a;
-//	var z_b_fast = z_b;
-
-	var dz_a = 0;
-	var dz_b = 0;
-
-	var iteration = 0;
-//	var iteration_fast = 0;
-	
-	if (old_data) {
-		z_a = old_data.z_a;
-		z_b = old_data.z_b;
-		dz_a = old_data.dz_a;
-		dz_b = old_data.dz_b;
-//		z_a_fast = old_data.z_a_fast;
-//		z_b_fast = old_data.z_b_fast;
-		iteration = old_data.iteration;
-//		iteration_fast = old_data.iteration_fast;
-		max_iterations += iteration;
+	if(! data) {
+		data = {
+			c_a: scale_x(x_raw),
+			c_b: scale_y(y_raw),
+			z_a: 0,
+			z_b: 0,
+			z_a_fast: 0,
+			z_b_fast: 0,
+			dz_a: 0,
+			dz_b: 0,
+			iteration: 0,
+			iteration_fast: 0,
+			z_a_fast_previous: [0],
+			z_b_fast_previous: [0],
+                }
 	}
+
+	max_iterations += data.iteration;
 
 	var orbit_found = false;
 	var escaped = false;
 	var escaped_fast = false;
+	var iteration = data.iteration;
+	var iteration_fast = data.iteration_fast;
 
 	var dz_a_new, z_a_new;
 	while ((! (orbit_found || escaped || escaped_fast)) && iteration < max_iterations) {
 		
-		dz_a_new = 2 * (z_a * dz_a - z_b * dz_b) + 1;
-		dz_b = 2 * (z_a * dz_b + dz_a * z_b);
-		dz_a = dz_a_new;
+		dz_a_new = 2 * (data.z_a * data.dz_a - data.z_b * data.dz_b) + 1;
+		data.dz_b = 2 * (data.z_a * data.dz_b + data.dz_a * data.z_b);
+		data.dz_a = dz_a_new;
 
-		z_a_new = z_a * z_a - z_b * z_b + c_a;
-		z_b = 2 * z_a * z_b + c_b;
-		z_a = z_a_new;
-
-/*		for (var i = 0; i < 2; i++) {
-			z_a_fast_new = z_a_fast * z_a_fast - z_b_fast * z_b_fast + x0;
-			z_b_fast = 2 * z_a_fast * z_b_fast + y0;
-			z_a_fast = z_a_fast_new;
+/*		if ((iteration % 2) === 0) {
+			data.z_a = data.z_a_fast_previous[iteration / 2];
+			data.z_b = data.z_b_fast_previous[iteration / 2];
 		}
-*/		
+		else {
+		*/
+			z_a_new = data.z_a * data.z_a - data.z_b * data.z_b + data.c_a;
+			data.z_b = 2 * data.z_a * data.z_b + data.c_b;
+			data.z_a = z_a_new;
+//		}
 
-/*		if (float_equal(z_a, z_a_fast) && float_equal(z_b, z_b_fast)) {
+		for (var i = 0; i < 2; i++) {
+			z_a_fast_new = data.z_a_fast * data.z_a_fast - data.z_b_fast * data.z_b_fast + data.c_a;
+			data.z_b_fast = 2 * data.z_a_fast * data.z_b_fast + data.c_b;
+			data.z_a_fast = z_a_fast_new;
+		}
+//		data.z_a_fast_previous.push(data.z_a_fast);
+//		data.z_b_fast_previous.push(data.z_b_fast);
+
+		if (float_equal(data.z_a, data.z_a_fast) && float_equal(data.z_b, data.z_b_fast)) {
 			orbit_found = true;
 			break;
 		}
-		*/
-		if (complex_magnitude(z_a, z_b) > 4) {
+		
+		else if (complex_magnitude(data.z_a, data.z_b) > 4) {
 			escaped = true;
 			break;
 		}
-		/*
-		else if (complex_magnitude(z_a_fast, z_b_fast) > 4) {
+/*		else if (complex_magnitude(z_a_fast, z_b_fast) > 4) {
 			escaped_fast = true;
 			break;
 		}
 		*/
 
 		iteration += 1;
-		//iteration_fast += 1;
+		iteration_fast += 1;
 	}
 
-	const z_mag = z_a * z_a + z_b * z_b,
-	      dz_mag = dz_a * dz_a + dz_b * dz_b,
-	      distance_estimate = Math.log(z_mag*z_mag) * z_mag / dz_mag;
+	data.escaped = escaped;
+	if (escaped || escaped_fast || orbit_found) {
+		data.finished = true;
 
-	const result = {
-		distance_estimate: distance_estimate,
-		iteration: iteration,
-		escaped: escaped
-	};
+		const z_mag = data.z_a * data.z_a + data.z_b * data.z_b,
+		      dz_mag = data.dz_a * data.dz_a + data.dz_b * data.dz_b;
+		data.distance_estimate = Math.log(z_mag*z_mag) * z_mag / dz_mag;
 
-	if (escaped) { //(escaped || escaped_fast || orbit_found) {
 		const escape_radius = 2;
-		result.finished = true;
-		result.continuous_iteration = iteration + log2(log2(Math.sqrt(z_a * z_a + z_b * z_b))) - log2(log2(escape_radius));
-	//	if (escaped) 
-/*		else if (escaped_fast)
-			result.iteration = iteration_fast;
-		else if (orbit_found) {
-			result.orbit_found = true;
-		}
-*/
+		data.continuous_iteration = iteration + log2(log2(Math.sqrt(data.z_a * data.z_a + data.z_b * data.z_b))) - log2(log2(escape_radius));
+		if (escaped) 
+			data.iteration = iteration;
+		else if (escaped_fast)
+			data.iteration = iteration_fast;
+		else if (orbit_found)
+			data.orbit_found = true;
 	}
 	else {
-		result.finished = false;
-		result.z_a = z_a;
-		result.z_b = z_b;
-		result.dz_a = dz_a;
-		result.dz_b = dz_b;
-//		result.z_a_fast = z_a_fast;
-//		result.z_b_fast = z_b_fast;
-//		result.iteration_fast = iteration_fast;
+		data.finished = false;
 	}
 
-	return result;
+	return data;
 }
 
 pixel_color = function(pixel_obj) {
 	var color = [];
-	if (!pixel_obj.escaped)
+	if ((! pixel_obj.finished) || pixel_obj.orbit_found)
 		color['red'] = color['green'] = color['blue'] = 0;
 	else {
 		const dwell = pixel_obj.iteration;
