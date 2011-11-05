@@ -5,6 +5,10 @@ const ctx = canvas.getContext('2d');
 var center = [-1, 0];
 var scale = 300;
 
+log2 = function(v) {
+	return Math.log(v) / Math.log(2);
+}
+
 /*
  * Float comparison, from:
  * http://support.microsoft.com/kb/69333
@@ -25,6 +29,58 @@ function setPixel(imageData, x, y, r, g, b, a) {
 	imageData.data[index+2] = b;
 	imageData.data[index+3] = a;
 }
+
+/*
+ * From http://jsres.blogspot.com/2008/01/convert-hsv-to-rgb-equivalent.html
+ */
+function hsv2rgb(h,s,v) {
+// Adapted from http://www.easyrgb.com/math.html
+// hsv values = 0 - 1, rgb values = 0 - 255
+var r, g, b;
+var RGB = new Array();
+if(s==0){
+  RGB['red']=RGB['green']=RGB['blue']=Math.round(v*255);
+}else{
+  // h must be < 1
+  var var_h = h * 6;
+  if (var_h==6) var_h = 0;
+  //Or ... var_i = floor( var_h )
+  var var_i = Math.floor( var_h );
+  var var_1 = v*(1-s);
+  var var_2 = v*(1-s*(var_h-var_i));
+  var var_3 = v*(1-s*(1-(var_h-var_i)));
+  if(var_i==0){ 
+    var_r = v; 
+    var_g = var_3; 
+    var_b = var_1;
+  }else if(var_i==1){ 
+    var_r = var_2;
+    var_g = v;
+    var_b = var_1;
+  }else if(var_i==2){
+    var_r = var_1;
+    var_g = v;
+    var_b = var_3
+  }else if(var_i==3){
+    var_r = var_1;
+    var_g = var_2;
+    var_b = v;
+  }else if (var_i==4){
+    var_r = var_3;
+    var_g = var_1;
+    var_b = v;
+  }else{ 
+    var_r = v;
+    var_g = var_1;
+    var_b = var_2
+  }
+  //rgb results = 0 ÷ 255  
+  RGB['red']=Math.round(var_r * 255);
+  RGB['green']=Math.round(var_g * 255);
+  RGB['blue']=Math.round(var_b * 255);
+  }
+return RGB;  
+};
 
 function getPixel(imageData, x, y) {
 	index = (x + y * imageData.width) * 4;
@@ -86,8 +142,9 @@ distance_estimator = function(z_a_raw, z_b_raw, max_iterations) {
 		z2_b = 2 * z_a * z_b + c_b;
 		z2_a = z_a_new;
 
-		dz_a = 2 * (z_a * dz_a - z_b * dz_b) + 1;
+		dz_a_new = 2 * (z_a * dz_a - z_b * dz_b) + 1;
 		dz_b = 2 * (z_a * dz_b + dz_a * z_b);
+		dz_a = dz_a_new;
 
 		z_a = z2_a;
 		z_b = z2_b;
@@ -133,18 +190,24 @@ complex_magnitude = function(a, b) {
 /*
  * Algorithm from http://en.wikipedia.org/wiki/Mandelbrot_set#For_programmers
  */
-escape_iterations = function(x_raw, y_raw, max_iterations, old_data) {
+calculate_pixel = function(x_raw, y_raw, max_iterations, old_data) {
 	if (old_data && old_data.finished)
 		return old_data;
 
 	const x0 = scale_x(x_raw);
 	const y0 = scale_y(y_raw);
 
-	var z_a = 0;
-	var z_b = 0;
+	var z_a = scale_x(x_raw);
+	var z_b = scale_y(y_raw);
+
+	const c_a = z_a,
+	      c_b = z_b;
 
 //	var z_a_fast = z_a;
 //	var z_b_fast = z_b;
+
+	var dz_a = 0;
+	var dz_b = 0;
 
 	var iteration = 0;
 //	var iteration_fast = 0;
@@ -152,6 +215,8 @@ escape_iterations = function(x_raw, y_raw, max_iterations, old_data) {
 	if (old_data) {
 		z_a = old_data.z_a;
 		z_b = old_data.z_b;
+		dz_a = old_data.dz_a;
+		dz_b = old_data.dz_b;
 //		z_a_fast = old_data.z_a_fast;
 //		z_b_fast = old_data.z_b_fast;
 		iteration = old_data.iteration;
@@ -163,10 +228,15 @@ escape_iterations = function(x_raw, y_raw, max_iterations, old_data) {
 	var escaped = false;
 	var escaped_fast = false;
 
+	var dz_a_new, z_a_new;
 	while ((! (orbit_found || escaped || escaped_fast)) && iteration < max_iterations) {
+		
+		dz_a_new = 2 * (z_a * dz_a - z_b * dz_b) + 1;
+		dz_b = 2 * (z_a * dz_b + dz_a * z_b);
+		dz_a = dz_a_new;
 
-		z_a_new = z_a * z_a - z_b * z_b + x0;
-		z_b = 2 * z_a * z_b + y0;
+		z_a_new = z_a * z_a - z_b * z_b + c_a;
+		z_b = 2 * z_a * z_b + c_b;
 		z_a = z_a_new;
 
 /*		for (var i = 0; i < 2; i++) {
@@ -196,7 +266,13 @@ escape_iterations = function(x_raw, y_raw, max_iterations, old_data) {
 		//iteration_fast += 1;
 	}
 
-	const result = {};
+	const z_mag = z_a * z_a + z_b * z_b,
+	      dz_mag = dz_a * dz_a + dz_b * dz_b,
+	      distance_estimate = Math.log(z_mag*z_mag) * z_mag / dz_mag;
+
+	const result = {
+		distance_estimate: distance_estimate
+	};
 
 	if (escaped) { //(escaped || escaped_fast || orbit_found) {
 		result.finished = true;
@@ -213,6 +289,8 @@ escape_iterations = function(x_raw, y_raw, max_iterations, old_data) {
 		result.finished = false;
 		result.z_a = z_a;
 		result.z_b = z_b;
+		result.dz_a = dz_a;
+		result.dz_b = dz_b;
 //		result.z_a_fast = z_a_fast;
 //		result.z_b_fast = z_b_fast;
 		result.iteration = iteration;
@@ -296,25 +374,29 @@ calculate_section = function(section_x, section_y, max_iterations, section_data)
 	for (var x = 0; x < section_size; x++) {
 		for (var y = 0; y < section_size; y++) {
 			index = x + y * section_size;
-			result[index] = escape_iterations(section_x + x, section_y + y, max_iterations, section_data[index]);
+			result[index] = calculate_pixel(section_x + x, section_y + y, max_iterations, section_data[index]);
 		}
 	}
 	return result;
 }
 
 draw_section = function(section_x, section_y, max_iterations, section_data) {
-	const section_imageData = ctx.createImageData(section_size, section_size);
+/*	const section_imageData = ctx.createImageData(section_size, section_size);
 	var d, color;
 	for (var x = 0; x < section_size; x++) {
 	       for (var y = 0; y < section_size; y++) {
-		       d = distance_estimator(section_x + x, section_y + y, 5000);
-		       if (d < 1e-10)
+		       d = escape_iterations_and_distance_estimate(section_x + x, section_y + y, 500);
+		       if (d.distance_estimate < 1e-5)
 			       color = [0,0,0];
-		       else
-			       color = [255,255,255];
-		       setPixel(section_imageData, x, y, color[0], color[1],color[2],0xff);
+		       else {
+			       hue = d.iterations;
+			       brightness = d.distance_estimate;
+			       color = hsv2rgb(hue, brightness, 1);
+		       }
+		       setPixel(section_imageData, x, y, color['red'], color['green'],color['blue'],0xff);
 	       }
 	} 
+	*/
 /*	data = new Array(section_size * section_size);
 	calculate_section_rectangular(section_x, section_y, section_size, section_size, section_size, data)
 	for (x = 0; x < section_size; x++) {
@@ -331,24 +413,34 @@ draw_section = function(section_x, section_y, max_iterations, section_data) {
 		}
 	}
 	*/
-/*	const calculated = calculate_section(section_x, section_y, max_iterations, section_data);
+	const calculated = calculate_section(section_x, section_y, max_iterations, section_data);
 	const section_imageData = ctx.createImageData(section_size, section_size);
 
-	var index, iter;
+	var index, c, color, hue, brightness;
 	for (var x = 0; x < section_size; x++) {
 		for (var y = 0; y < section_size; y++) {
 			index = x + y * section_size;
-			iter = calculated[index];
-			var color;
-			if (iter.finished && (! iter.orbit_found))
-				color = get_iteration_color(iter.iteration);
-			else
-				color = [0,0,0];
-			setPixel(section_imageData, x, y, color[0], color[1], color[2], 0xff)
+			c = calculated[index];
+			color = [];
+			if (!c.finished) //(c.distance_estimate < 1e-5)
+				color['red'] = color['green'] = color['blue'] = 255;
+			else if (c.distance_estimate < 1e-5)
+				color['red'] = color['green'] = color['blue'] = 0;
+			else {
+				iterations = c.iterations;
+//				hue = (360 * log2(iterations)) modulo 360 if (iterations mod 2 = 1) then hue = (hue + 20) modulo 360
+				hue = (360 * Math.log(iterations) / Math.log(2)) % 360;
+				if ((iterations % 2) === 1)
+					hue = (hue + 20) % 360;
+
+				brightness = c.distance_estimate;
+				color = hsv2rgb(hue, brightness, 1);
+			}
+			setPixel(section_imageData, x, y, color['red'], color['green'], color['blue'], 0xff)
 		}
-	}*/
+	}
 	ctx.putImageData(section_imageData, section_x, section_y);
-//	return calculated;
+	return calculated;
 }
 
 /*
