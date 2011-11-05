@@ -122,77 +122,38 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
 			c_b: scale_y(y_raw),
 			z_a: 0,
 			z_b: 0,
-//			z_a_fast: 0,
-//			z_b_fast: 0,
 			dz_a: 0,
 			dz_b: 0,
 			iteration: 0,
-//			iteration_fast: 0,
-	//		z_a_fast_previous: [0],
-	//		z_b_fast_previous: [0],
                 }
 	}
 	max_iterations += data.iteration;
 
-//	var orbit_found = false;
 	var escaped = false;
-//	var escaped_fast = false;
 	var iteration = data.iteration;
-//	var iteration_fast = data.iteration_fast;
 
 	var dz_a_new, z_a_new;
-	while (! escaped //(data.z_a * data.z_a + data.z_b * data.z_b < 4 //(! escaped //|| escaped || escaped_fast)) 
-			&& iteration < max_iterations) {
-		
+	while (! escaped && iteration < max_iterations) {
+
 		dz_a_new = 2 * (data.z_a * data.dz_a - data.z_b * data.dz_b) + 1;
 		data.dz_b = 2 * (data.z_a * data.dz_b + data.dz_a * data.z_b);
 		data.dz_a = dz_a_new;
 
-/*		if ((iteration % 2) === 0) {
-			data.z_a = data.z_a_fast_previous[iteration / 2];
-			data.z_b = data.z_b_fast_previous[iteration / 2];
-		}
-		else {
-		*/
-			z_a_new = data.z_a * data.z_a - data.z_b * data.z_b + data.c_a;
-			data.z_b = 2 * data.z_a * data.z_b + data.c_b;
-			data.z_a = z_a_new;
-//		}
-
-/*		for (var i = 0; i < 2; i++) {
-			z_a_fast_new = data.z_a_fast * data.z_a_fast - data.z_b_fast * data.z_b_fast + data.c_a;
-			data.z_b_fast = 2 * data.z_a_fast * data.z_b_fast + data.c_b;
-			data.z_a_fast = z_a_fast_new;
-		}
-*/
-//		data.z_a_fast_previous.push(data.z_a_fast);
-//		data.z_b_fast_previous.push(data.z_b_fast);
-/*
-		if (float_equal(data.z_a, data.z_a_fast) && float_equal(data.z_b, data.z_b_fast)) {
-			orbit_found = true;
-			break;
-		}
-*/		
+		z_a_new = data.z_a * data.z_a - data.z_b * data.z_b + data.c_a;
+		data.z_b = 2 * data.z_a * data.z_b + data.c_b;
+		data.z_a = z_a_new;
+		
 		if (complex_magnitude(data.z_a, data.z_b) > 4) {
 			escaped = true;
 			break;
 		}
-		
-/*		else if (complex_magnitude(z_a_fast, z_b_fast) > 4) {
-			escaped_fast = true;
-			break;
-		}
-		*/
-
 		iteration += 1;
-//		iteration_fast += 1;
 	}
 
 	data.escaped = escaped;
 	data.iteration = iteration;
-//	data.iteration_fast = iteration_fast;
 
-	if (escaped) { //(escaped || escaped_fast || orbit_found) {
+	if (escaped) {
 		data.finished = true;
 
 		const z_mag = data.z_a * data.z_a + data.z_b * data.z_b,
@@ -201,13 +162,6 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
 
 		const escape_radius = 2;
 		data.continuous_iteration = iteration + log2(log2(Math.sqrt(data.z_a * data.z_a + data.z_b * data.z_b))) - log2(log2(escape_radius));
-//		if (escaped) 
-//			data.iteration = iteration;
-/*		else if (escaped_fast)
-			data.iteration = iteration_fast;
-		else if (orbit_found)
-			data.orbit_found = true;
-			*/
 	}
 	else {
 		data.finished = false;
