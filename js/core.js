@@ -257,7 +257,7 @@ pixel_color = function(pixel_obj) {
 	return color;
 }
 
-const section_size = 150;
+const section_size = 100;
 const x_sections = canvas.width / section_size;
 const y_sections = canvas.height / section_size;
 
