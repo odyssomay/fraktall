@@ -314,7 +314,16 @@ calculate_section_rectangular = function(section_x, section_y, rel_x, rel_y, wid
 		if (! is_equal(first_value, new_value))
 			draw_all = true;
 	}
-	
+	if ((width < 5) && (height < 5)) {
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				index = get_index(x, y);
+				data[index] = calculate_relative(x,y);
+			}
+		}
+		return;
+	}
+
 	var first_value = calculate_relative(0,0);
 
 	var draw_all = false;
@@ -333,15 +342,7 @@ calculate_section_rectangular = function(section_x, section_y, rel_x, rel_y, wid
 		}
 	}
 	
-	if ((width < 5) && (height < 5)) {
-		for (x = 0; x < width; x++) {
-			for (y = 0; y < height; y++) {
-				index = get_index(x, y);
-				data[index] = calculate_relative(x,y);
-			}
-		}
-	}
-	else if (draw_all) {
+	if (draw_all) {
 		const half_width = Math.floor(width / 2);
 		const half_height = Math.floor(height / 2);
 		function recur(x, y, width, height) {
