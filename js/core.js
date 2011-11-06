@@ -121,7 +121,7 @@ complex_magnitude = function(a, b) {
  * Algorithm from http://en.wikipedia.org/wiki/Mandelbrot_set#For_programmers
  */
 calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
-	if (data && data.finished)
+	if (data && data.escaped)
 		return data;
 
 	if(! data) {
@@ -137,42 +137,44 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
 	}
 	max_iterations += data.iteration;
 
-	var escaped = false;
-	var iteration = data.iteration;
+	const c_a = data.c_a,
+	      c_b = data.c_b;
+
+	var z_a = data.z_a,
+	    z_b = data.z_b,
+	    dz_a = data.dz_a,
+	    dz_b = data.dz_b,
+	    iteration = data.iteration;
 
 	var dz_a_new, z_a_new;
-	while (! escaped && iteration < max_iterations) {
+	while (z_a * z_a + z_b * z_b < 4 && iteration < max_iterations) {
 
-		dz_a_new = 2 * (data.z_a * data.dz_a - data.z_b * data.dz_b) + 1;
-		data.dz_b = 2 * (data.z_a * data.dz_b + data.dz_a * data.z_b);
-		data.dz_a = dz_a_new;
+		dz_a_new = 2 * (z_a * dz_a - z_b * dz_b) + 1;
+		dz_b = 2 * (z_a * dz_b + dz_a * z_b);
+		dz_a = dz_a_new;
 
-		z_a_new = data.z_a * data.z_a - data.z_b * data.z_b + data.c_a;
-		data.z_b = 2 * data.z_a * data.z_b + data.c_b;
-		data.z_a = z_a_new;
+		z_a_new = z_a * z_a - z_b * z_b + c_a;
+		z_b = 2 * z_a * z_b + c_b;
+		z_a = z_a_new;
 		
-		if (complex_magnitude(data.z_a, data.z_b) > 4) {
-			escaped = true;
-			break;
-		}
 		iteration += 1;
 	}
 
-	data.escaped = escaped;
 	data.iteration = iteration;
+	data.z_a = z_a; data.z_b = z_b; data.dz_a = dz_a; data.dz_b = dz_b;
 
-	if (escaped) {
-		data.finished = true;
+	if (z_a * z_a + z_b * z_b > 4){  // (escaped) {
+		data.escaped = true;
 
-		const z_mag = data.z_a * data.z_a + data.z_b * data.z_b,
-		      dz_mag = data.dz_a * data.dz_a + data.dz_b * data.dz_b;
-		data.distance_estimate = Math.log(z_mag*z_mag) * z_mag / dz_mag;
+//		const z_mag = z_a * z_a + z_b * z_b,
+//		      dz_mag = dz_a * dz_a + dz_b * dz_b;
+//		data.distance_estimate = Math.log(z_mag*z_mag) * z_mag / dz_mag;
 
-		const escape_radius = 2;
-//		data.continuous_iteration = iteration + log2(log2(Math.sqrt(data.z_a * data.z_a + data.z_b * data.z_b))) - log2(log2(escape_radius));
+//		const escape_radius = 2;
+//		data.continuous_iteration = iteration + log2(log2(Math.sqrt(z_a * z_a + z_b * z_b))) - log2(log2(escape_radius));
 	}
 	else {
-		data.finished = false;
+		data.escaped = false;
 	}
 
 	return data;
@@ -190,7 +192,7 @@ pixel_color = function(pixel_obj) {
 		color['green'] = 255;
 		color['blue'] = 0;
 	}
-	else if ((! pixel_obj.finished) || pixel_obj.orbit_found)
+	else if ((! pixel_obj.escaped) || pixel_obj.orbit_found)
 		color['red'] = color['green'] = color['blue'] = 0;
 	else {
 /*		const dwell = pixel_obj.iteration;
@@ -230,15 +232,15 @@ pixel_color = function(pixel_obj) {
 			angle = angle + 0.02 
 		}
 		*/
-/*
-		angle = angle + 0.0001 * finalrad;
-		hue = angle * 5; // 10;
+
+/*		angle = angle + 0.0001 * finalrad;
+		hue = angle * 10;
 		hue = hue - Math.floor(hue);
 		saturation = radius - Math.floor(radius);
 */
 //		value = Math.max(- Math.sqrt(pixel_obj.distance_estimate) + 0.5, 0);
 
-//		color = hsv2rgb(hue, saturation, 0.5);
+//		color = hsv2rgb(hue, 0.5, 0.5);
 		color['red'] = (pixel_obj.iteration * 5) % 255;
 		color['green'] = (Math.log(pixel_obj.distance_estimate) * 10) % 255;
 		color['blue'] = 0;
@@ -246,7 +248,7 @@ pixel_color = function(pixel_obj) {
 	return color;
 }
 
-const section_size = 100;
+const section_size = 150;
 const x_sections = canvas.width / section_size;
 const y_sections = canvas.height / section_size;
 
@@ -264,15 +266,14 @@ grey_image = function() {
 	ctx.putImageData(imageData, 0, 0);
 }
 
+/*
+ * Mariani/Silver optimization
+ * http://mrob.com/pub/muency/marianisilveralgorithm.html
+ */
 calculate_section_rectangular = function(section_x, section_y, rel_x, rel_y, width, height, data) {
-	const max_iterations = 50;
-	var first_value = calculate_pixel(section_x + rel_x, section_y + rel_y, max_iterations);
-
-	var draw_all = false;
-
+	const max_iterations = 100;
 	function is_equal(v1, v2) {
 		return ((v1.finished === v2.finished) && (v1.iteration === v2.iteration));
-//		return (v1.iteration === v2.iteration);
 	}
 	function get_global_x(x) {
 		return section_x + x + rel_x;
@@ -292,6 +293,10 @@ calculate_section_rectangular = function(section_x, section_y, rel_x, rel_y, wid
 		if (! is_equal(first_value, data[index]))
 			draw_all = true;
 	}
+	
+	var first_value = calculate_relative(0,0);
+
+	var draw_all = false;
 
 	var index_top, index_bottom;
 	for (var x = 0; x < width ; x++) {
@@ -307,7 +312,15 @@ calculate_section_rectangular = function(section_x, section_y, rel_x, rel_y, wid
 		}
 	}
 	
-	if (draw_all && ! (width < 2) && ! (height < 2)) {
+	if ((width < 5) && (height < 5)) {
+		for (x = 0; x < width; x++) {
+			for (y = 0; y < height; y++) {
+				index = get_index(x, y);
+				data[index] = calculate_relative(x,y);
+			}
+		}
+	}
+	else if (draw_all) {
 		const half_width = Math.floor(width / 2);
 		const half_height = Math.floor(height / 2);
 		function recur(x, y, width, height) {
@@ -322,23 +335,8 @@ calculate_section_rectangular = function(section_x, section_y, rel_x, rel_y, wid
 		var index, g_x, g_y;
 		for (x = 0; x < width; x++) {
 			for (y = 0; y < height; y++) {
-//				g_x = x + section_x + rel_x;
-//				g_y = y + section_y + rel_y;
-				index = get_index(x, y); // x + rel_x + (y + rel_y) * section_size;
-				if ((width < 2) && (height < 2))
-					data[index] = 'small';
-				//data[index] = first_value; 
-				/*{
-					c_a: first_value.c_a,
-					c_b: first_value.c_b,
-					z_a: first_value.z_a,
-					z_b: first_value.z_b,
-					dz_a: first_value.dz_a,
-					dz_b: first_value.dz_b,
-					iteration: first_value.iteration
-				};*/
-
-//				data[index] = calculate_relative(x, y);
+				index = get_index(x, y);
+				data[index] = first_value; 
 			}
 		}
 	}
