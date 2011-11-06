@@ -10,8 +10,31 @@ if (document.body.offsetWidth < 600) {
 var center = [-1, 0];
 var scale = 300;
 
-if (canvas.width < 900)
+if (canvas.width < 900) {
 	scale = 120;
+}
+
+parse_hash = function() {
+	if ((! location.hash) || (location.hash.length === 0)) {
+		location.hash = 'scale=300_center=-1,0';
+		redraw();
+		return;
+	}
+
+	const h = location.hash,
+	      s = h.split('_'),
+	      scale_raw = s[0].split('scale=')[1],
+	      center_raw = s[1].split('center=')[1],
+	      center_array_raw = center_raw.split(',');
+	if(! isNaN(scale_raw)) {
+		scale = parseFloat(scale_raw);
+	}
+	if(! (isNaN(center_array_raw[0]) && isNaN(center_array_raw[1]))) {
+		center = [parseFloat(center_array_raw[0]),
+		          parseFloat(center_array_raw[1])];
+	}
+	redraw();
+}
 
 log2 = function(v) {
 	return Math.log(v) / Math.log(2);
@@ -456,6 +479,12 @@ draw = function() {
 	}, 50);
 }
 
+redraw = function () {
+	new_draw_toggle = ! new_draw_toggle;
+	grey_image();
+	draw();
+}
+
 /*
  * From: http://answers.oreilly.com/topic/1929-how-to-use-the-canvas-and-draw-elements-in-html5/
  */
@@ -478,14 +507,23 @@ function getCursorPosition(e) {
 	return [x, y];
 }
 
+var clicking = false;
+
 canvas.onclick = function (e) {
+	clicking = true;
 	new_draw_toggle = ! new_draw_toggle;
 	const pos = getCursorPosition(e);
 	center = [scale_x(pos[0]), scale_y(pos[1])];
 	scale *= 3;
-	grey_image();	
-	draw();
+	redraw();
+	location.hash = 'scale=' + scale + '_center=' + center;
+	clicking = false;
 }
 
-draw();
+window.onhashchange = function () {
+	if (!clicking)
+		parse_hash()
+}
+
+parse_hash();
 
