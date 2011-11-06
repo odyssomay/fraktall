@@ -84,6 +84,13 @@ a:hover {
 }
 
 @media handheld, only screen and (max-width: 500px) {
+	h1, h2 {
+		float: none;
+		text-align: center;
+	}
+	h2 {
+		margin-bottom: 1em;
+	}
 	#container {
 		width: 300px;
 		margin-left: 10px;
