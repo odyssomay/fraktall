@@ -166,12 +166,12 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
 	if (z_a * z_a + z_b * z_b > 4){  // (escaped) {
 		data.escaped = true;
 
-//		const z_mag = z_a * z_a + z_b * z_b,
-//		      dz_mag = dz_a * dz_a + dz_b * dz_b;
-//		data.distance_estimate = Math.log(z_mag*z_mag) * z_mag / dz_mag;
+		const z_mag = z_a * z_a + z_b * z_b,
+		      dz_mag = dz_a * dz_a + dz_b * dz_b;
+		data.distance_estimate = Math.log(z_mag*z_mag) * z_mag / dz_mag;
 
-//		const escape_radius = 2;
-//		data.continuous_iteration = iteration + log2(log2(Math.sqrt(z_a * z_a + z_b * z_b))) - log2(log2(escape_radius));
+		const escape_radius = 2;
+		data.continuous_iteration = iteration + log2(log2(Math.sqrt(z_a * z_a + z_b * z_b))) - log2(log2(escape_radius));
 	}
 	else {
 		data.escaped = false;
@@ -195,7 +195,7 @@ pixel_color = function(pixel_obj) {
 	else if ((! pixel_obj.escaped) || pixel_obj.orbit_found)
 		color['red'] = color['green'] = color['blue'] = 0;
 	else {
-/*		const dwell = pixel_obj.iteration;
+		const dwell = pixel_obj.iteration;
 		var iterations, hue, P;
 		const finalrad = dwell - pixel_obj.continuous_iteration,
 		      pixel_spacing = scale_x(1) - scale_x(0),
@@ -225,7 +225,7 @@ pixel_color = function(pixel_obj) {
 			value *= 0.85;
 			radius *= 0.667;
 		}
-*/
+
 
 /*		const finalang = finalrad * 180 / Math.PI;
 		if (finalang > Math.PI) {
@@ -233,17 +233,17 @@ pixel_color = function(pixel_obj) {
 		}
 		*/
 
-/*		angle = angle + 0.0001 * finalrad;
+		angle = angle + 0.0001 * finalrad;
 		hue = angle * 10;
 		hue = hue - Math.floor(hue);
 		saturation = radius - Math.floor(radius);
-*/
+
 //		value = Math.max(- Math.sqrt(pixel_obj.distance_estimate) + 0.5, 0);
 
-//		color = hsv2rgb(hue, 0.5, 0.5);
-		color['red'] = (pixel_obj.iteration * 5) % 255;
-		color['green'] = (Math.log(pixel_obj.distance_estimate) * 10) % 255;
-		color['blue'] = 0;
+		color = hsv2rgb(hue, saturation, (1 - value) / 2 + 0.1);
+//		color['red'] = (pixel_obj.iteration * 5) % 255;
+//		color['green'] = (Math.log(pixel_obj.distance_estimate) * 10) % 255;
+//		color['blue'] = 0;
 	}
 	return color;
 }
