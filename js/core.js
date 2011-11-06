@@ -243,7 +243,7 @@ pixel_color = function(pixel_obj) {
 		*/
 
 		angle = angle + 0.0001 * finalrad;
-		hue = angle * 10;
+		hue = angle * 2 ;
 		hue = hue - Math.floor(hue);
 		saturation = radius - Math.floor(radius);
 
