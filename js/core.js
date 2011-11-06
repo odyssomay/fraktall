@@ -511,7 +511,6 @@ var clicking = false;
 
 canvas.onclick = function (e) {
 	clicking = true;
-	new_draw_toggle = ! new_draw_toggle;
 	const pos = getCursorPosition(e);
 	center = [scale_x(pos[0]), scale_y(pos[1])];
 	scale *= 3;
