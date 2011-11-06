@@ -258,7 +258,7 @@ grey_image = function() {
 
 calculate_section_rectangular = function(section_x, section_y, rel_x, rel_y, width, height, data) {
 	const max_iterations = 50;
-	var first_value = calculate_pixel(section_x + rel_x, section_y + rel_y, 50);
+	var first_value = calculate_pixel(section_x + rel_x, section_y + rel_y, max_iterations);
 
 	var draw_all = false;
 
