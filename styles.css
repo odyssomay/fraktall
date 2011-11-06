@@ -5,6 +5,7 @@ html {
 	background: #CCC;
 	background: linear-gradient(top, #CCC, #777);
 	background: -webkit-linear-gradient(top, #CCC, #777);
+	background: -moz-linear-gradient(top, #CCC, #777);
 	background: -o-linear-gradient(top, #CCC, #777);
 	background: -ms-linear-gradient(top, #CCC, #777);
 }
@@ -48,7 +49,7 @@ canvas {
 
 #container {
 	display: block;
-	width: 900px;
+	width: 960px; /* width of canvas is 900, width of border is 30 */
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -88,14 +89,13 @@ a:hover {
 @media handheld, only screen and (max-width: 500px) {
 	h1, h2 {
 		float: none;
-		text-align: center;
+		margin-left: 20px;
 	}
 	h2 {
 		margin-bottom: 1em;
 	}
 	#container {
-		width: 300px;
-		margin-left: 10px;
+		width: 360px;
 	}
 	#view {
 		width: 300px;
