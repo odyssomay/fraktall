@@ -2,8 +2,16 @@
 const canvas = document.getElementById('draw_area')
 const ctx = canvas.getContext('2d');
 
+if (document.body.offsetWidth < 600) {
+	canvas.setAttribute('width', 300);
+	canvas.setAttribute('height', 300);
+}
+
 var center = [-1, 0];
 var scale = 300;
+
+if (canvas.width < 900)
+	scale = 120;
 
 log2 = function(v) {
 	return Math.log(v) / Math.log(2);
