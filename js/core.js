@@ -207,7 +207,7 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
 		z_a: z_a, z_b: z_b, dz_a: dz_a, dz_b: dz_b
 	}
 
-	if (z_a * z_a + z_b * z_b > 4){  // (escaped) {
+	if (z_a * z_a + z_b * z_b > 4) { 
 		result.escaped = true;
 
 		const z_mag = z_a * z_a + z_b * z_b,
@@ -238,9 +238,6 @@ pixel_color = function(pixel_obj) {
 	}
 	else if ((! pixel_obj.escaped) || pixel_obj.orbit_found) 
 		color['red'] = color['green'] = color['blue'] = 0;
-//	else if (pixel_obj.distance_estimate < 1e-10) {
-//		color['red'] = color['green'] = color['blue'] = 0;
-//	}
 	else {
 		const dwell = pixel_obj.iteration;
 		var iterations, hue, P;
@@ -272,25 +269,11 @@ pixel_color = function(pixel_obj) {
 			value *= 0.85;
 			radius *= 0.667;
 		}
-
-
-/*		const finalang = finalrad * 180 / Math.PI;
-		if (finalang > Math.PI) {
-			angle = angle + 0.02 
-		}
-		*/
-
 		angle = angle + 0.0001 * finalrad;
 		hue = angle * 2 ;
 		hue = hue - Math.floor(hue);
 		saturation = radius - Math.floor(radius);
-
-//		value = Math.max(- Math.sqrt(pixel_obj.distance_estimate) + 0.5, 0);
-
 		color = hsv2rgb(hue, saturation, (1 - value) / 2 + 0.1);
-//		color['red'] = (pixel_obj.iteration * 5) % 255;
-//		color['green'] = (Math.log(pixel_obj.distance_estimate) * 10) % 255;
-//		color['blue'] = 0;
 	}
 	return color;
 }
@@ -317,90 +300,92 @@ grey_image = function() {
  * Mariani/Silver optimization
  * http://mrob.com/pub/muency/marianisilveralgorithm.html
  */
-calculate_section_rectangular = function(section_x, section_y, rel_x, rel_y, width, height, data, refine_iteration) {
-	const max_iterations = 100;
-	function is_equal(v1, v2) {
-		return ((v1.escaped === v2.escaped) && (v1.iteration === v2.iteration));
-	}
-	function get_global_x(x) {
-		return section_x + x + rel_x;
-	}
-	function get_global_y(y) {
-		return section_y + y + rel_y;
-	}
-	function get_index(x, y) {
-		return x + rel_x + (y + rel_y) * section_size;
-	}
-	function calculate_relative(x, y) {
-		index = get_index(x, y);
-		var new_value = data[index];
-		if (new_value) {
-			if (! (new_value.refine_iteration === refine_iteration)) {
-				new_value = calculate_pixel(get_global_x(x), get_global_y(y), max_iterations, new_value);
+calculate_section_rectangular = function(section_x, section_y, data, refine_iteration, max_iterations) {
+	const calculate_inner_section = function(rel_x, rel_y, width, height) {	
+		const is_equal = function(v1, v2) {
+			return ((v1.escaped === v2.escaped) && (v1.iteration === v2.iteration));
+		}
+		const get_global_x = function(x) {
+			return section_x + x + rel_x;
+		}
+		const get_global_y = function(y) {
+			return section_y + y + rel_y;
+		}
+		const get_index = function(x, y) {
+			return x + rel_x + (y + rel_y) * section_size;
+		}
+		const calculate_relative = function(x, y) {
+			index = get_index(x, y);
+			var new_value = data[index];
+			if (new_value) {
+				if (! (new_value.refine_iteration === refine_iteration)) {
+					new_value = calculate_pixel(get_global_x(x), get_global_y(y), max_iterations, new_value);
+				}
 			}
+			else {
+				new_value = calculate_pixel(get_global_x(x), get_global_y(y), max_iterations);
+			}
+			new_value.refine_iteration = refine_iteration;
+			return new_value;
+		}
+		const set_and_check_value = function(x, y) {
+			index = get_index(x, y);
+			var new_value = calculate_relative(x, y);
+			data[index] = new_value;
+			if (! is_equal(first_value, new_value))
+				draw_all = true;
+		}
+
+		if ((width < 5) && (height < 5)) {
+			for (x = 0; x < width; x++) {
+				for (y = 0; y < height; y++) {
+					index = get_index(x, y);
+					data[index] = calculate_relative(x,y);
+				}
+			}
+			return;
+		}
+
+		var first_value = calculate_relative(0,0),
+		    draw_all = false,
+		    index_top, index_bottom;
+
+		for (var x = 0; x < width ; x++) {
+			set_and_check_value(x, 0);
+			set_and_check_value(x, height - 1);
+		}
+
+		var index_left, index_right;
+		if (! draw_all) {
+			for (var y = 0; y < height; y++) {
+				set_and_check_value(0, y);
+				set_and_check_value(width - 1, y);
+			}
+		}
+
+		if (draw_all) {
+			const half_width = Math.floor(width / 2);
+			const half_height = Math.floor(height / 2);
+			function recur(x, y, width, height) {
+				calculate_inner_section(x, y, width, height);
+			}
+			recur(rel_x,              rel_y,               half_width,         half_height);
+			recur(rel_x + half_width, rel_y,               width - half_width, half_height);
+			recur(rel_x,              rel_y + half_height, half_width,         height - half_height);
+			recur(rel_x + half_width, rel_y + half_height, width - half_width, height - half_height);
 		}
 		else {
-			new_value = calculate_pixel(get_global_x(x), get_global_y(y), max_iterations);
-		}
-		new_value.refine_iteration = refine_iteration;
-		return new_value;
-	}
-	function set_and_check_value(x, y) {
-		index = get_index(x, y);
-		var new_value = calculate_relative(x, y);
-		data[index] = new_value;
-		if (! is_equal(first_value, new_value))
-			draw_all = true;
-	}
-	if ((width < 5) && (height < 5)) {
-		for (x = 0; x < width; x++) {
-			for (y = 0; y < height; y++) {
-				index = get_index(x, y);
-				data[index] = calculate_relative(x,y);
-			}
-		}
-		return;
-	}
-
-	var first_value = calculate_relative(0,0);
-
-	var draw_all = false;
-
-	var index_top, index_bottom;
-	for (var x = 0; x < width ; x++) {
-		set_and_check_value(x, 0);
-		set_and_check_value(x, height - 1);
-	}
-
-	var index_left, index_right;
-	if (! draw_all) {
-		for (var y = 0; y < height; y++) {
-			set_and_check_value(0, y);
-			set_and_check_value(width - 1, y);
-		}
-	}
-	
-	if (draw_all) {
-		const half_width = Math.floor(width / 2);
-		const half_height = Math.floor(height / 2);
-		function recur(x, y, width, height) {
-			calculate_section_rectangular(section_x, section_y, x, y, width, height, data, refine_iteration);
-		}
-		recur(rel_x,              rel_y,               half_width,         half_height);
-		recur(rel_x + half_width, rel_y,               width - half_width, half_height);
-		recur(rel_x,              rel_y + half_height, half_width,         height - half_height);
-		recur(rel_x + half_width, rel_y + half_height, width - half_width, height - half_height);
-	}
-	else {
-		var index, g_x, g_y;
-		// don't copy the border - it is already calculated
-		for (x = 1; x < width - 1; x++) {
-			for (y = 1; y < height - 1; y++) {
-				index = get_index(x, y);
-				data[index] = first_value; 
+			var index, g_x, g_y;
+			// don't copy the border - it is already calculated
+			for (x = 1; x < width - 1; x++) {
+				for (y = 1; y < height - 1; y++) {
+					index = get_index(x, y);
+					data[index] = first_value; 
+				}
 			}
 		}
 	}
+	calculate_inner_section(0, 0, section_size, section_size);
 }
 
 calculate_section = function(section_x, section_y, max_iterations, section_data) {
@@ -425,7 +410,7 @@ draw_section = function(section_x, section_y, max_iterations, refine_iteration, 
 		calculated = section_data;
 	else
 		calculated = new Array(section_size * section_size);
-	calculate_section_rectangular(section_x, section_y, 0, 0, section_size, section_size, calculated, refine_iteration);
+	calculate_section_rectangular(section_x, section_y, calculated, refine_iteration, max_iterations);
 //	const calculated = calculate_section(section_x, section_y, max_iterations, section_data);
 	const section_imageData = ctx.createImageData(section_size, section_size);
 
@@ -454,7 +439,7 @@ refine_section = function(x, y, max_iterations, refine_iteration, sections_data)
  * http://mrob.com/pub/muency/automaticdwelllimit.html
  */
 draw_obj = function() {
-	var max_iterations = 100,
+	var max_iterations = 50,
 	    max_refine_iterations = 4,
 	    refine_iteration = 0,
 	    sections_data,
