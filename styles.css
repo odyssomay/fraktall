@@ -1,6 +1,6 @@
 html {
-	font-family: 'LindenHillRegular';
-	font-weight: lighter;
+	font-family: 'CantarellRegular';
+	font-size: 0.9em;
 	height: 100%;
 	background: #CCC;
 	background: linear-gradient(top, #CCC, #777);
@@ -54,7 +54,7 @@ a:hover {
 	font-weight: lighter;
 	text-align: center;
 	position: relative;
-	top: -23px;
+	top: -26px;
 	height: 0;
 }
 
@@ -62,7 +62,7 @@ a:hover {
 	height: 0;
 	position: absolute;
 	right: 30px;
-	top: 8px;
+	top: 5px;
 }
 
 #footer {
