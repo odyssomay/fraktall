@@ -82,6 +82,7 @@ a:hover {
 
 canvas {
 	display: block;
+	cursor: crosshair;
 }
 
 #container {
