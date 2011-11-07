@@ -35,12 +35,12 @@ h3 {
 
 a {
 	text-decoration: none;
-	color: #AAA;
+	color: #CCC;
 	margin: 5px;
 }
 
 a:hover { 
-	color: #888;
+	color: #AAA;
 	cursor: pointer;
 }
 
