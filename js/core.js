@@ -36,6 +36,21 @@ parse_hash = function() {
 	redraw();
 }
 
+var is_sharing = false;
+share = function(should_share) {
+	is_sharing = should_share;
+	share_dialog = document.getElementById('share');
+	if (should_share)
+		share_dialog.style.display = 'block';
+	else
+		share_dialog.style.display = 'none';
+}
+share(false);
+
+share_toggle = function() {
+	share(! is_sharing);
+}
+
 log2 = function(v) {
 	return Math.log(v) / Math.log(2);
 }
@@ -511,6 +526,7 @@ var clicking = false;
 
 canvas.onclick = function (e) {
 	clicking = true;
+	share(false);
 	const pos = getCursorPosition(e);
 	center = [scale_x(pos[0]), scale_y(pos[1])];
 	scale *= 3;
@@ -522,7 +538,9 @@ canvas.onclick = function (e) {
 window.onhashchange = function () {
 	if (!clicking)
 		parse_hash()
+	document.getElementById('share_url').value = location.href;
 }
 
+document.getElementById('share_url').value = location.href;
 parse_hash();
 

@@ -38,7 +38,15 @@
 			</div>
 			<div style="position: relative;">
 				<div id="top_menu">
-					<a>Share</a>
+					<a onclick="share_toggle();">Share</a>
+				</div>
+				<div id="share">
+					Copy this url and send it to your friends!
+					<div>
+						<input id="share_url" type="text" readonly="readonly">
+					</div>
+					<br>
+					<a onclick="share(false)">close</a>
 				</div>
 			</div>
 			<div id="view">

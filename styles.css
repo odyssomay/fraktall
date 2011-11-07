@@ -34,13 +34,14 @@ h3 {
 }
 
 a {
-	margin-left: 20px;
 	text-decoration: none;
-	color: #005;
+	color: #AAA;
+	margin: 5px;
 }
 
 a:hover { 
-	color: #333;
+	color: #888;
+	cursor: pointer;
 }
 
 #header {
@@ -57,16 +58,6 @@ a:hover {
 	height: 0;
 }
 
-#menu a, #top_menu a {
-	margin: 5px;
-	color: #AAA;
-}
-
-#menu a:hover, #top_menu a:hover {
-	color: #888;
-	cursor: pointer;
-}
-
 #top_menu {
 	height: 0;
 	position: absolute;
@@ -78,6 +69,17 @@ a:hover {
 	margin-left: 20px;
 	margin-right: 20px;
 	margin-top: 8px;
+}
+
+#footer a {
+	margin: 0;
+	margin-left: 20px;
+	float: right;
+	color: #005;
+}
+
+#footer a:hover {
+	color: #333;
 }
 
 canvas {
@@ -101,10 +103,6 @@ canvas {
 	border-radius: 20px;
 }
 
-#footer a {
-	float: right;
-}
-
 #fb {
 	display: inline;
 	position: absolute;
@@ -114,6 +112,30 @@ canvas {
 	height: 0;
 	width: 100%;
 	text-align: center;
+}
+
+#share {
+	display: none;
+	position: absolute;
+	top: 100px;
+	width: 300px;
+	height: 100px;
+	margin-left: 280px;
+	margin-right: 280px;
+	padding: 20px;
+	text-align: center;
+	color: white;
+	opacity: 0.8;
+	background: black;
+	border: 5px solid #AAA;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+}
+
+#share input[type='text'] {
+	margin-top: 2em;
+	width: 80%;
 }
 
 @media handheld, only screen and (max-width: 500px) {
