@@ -33,9 +33,38 @@ h3 {
 	font-size: 3em;
 }
 
+a {
+	margin-left: 20px;
+	text-decoration: none;
+	color: #005;
+}
+
+a:hover { 
+	color: #333;
+}
+
 #header {
 	margin-top: 0.5em;
 	overflow: auto;
+}
+
+#menu {
+	color: #777;
+	font-weight: lighter;
+	text-align: center;
+	position: relative;
+	top: -23px;
+	height: 0;
+}
+
+#menu a {
+	margin: 5px;
+	color: #AAA;
+}
+
+#menu a:hover {
+	color: #888;
+	cursor: pointer;
 }
 
 #footer {
@@ -64,16 +93,6 @@ canvas {
 
 #footer a {
 	float: right;
-}
-
-a {
-	margin-left: 20px;
-	text-decoration: none;
-	color: #005;
-}
-
-a:hover { 
-	color: #333;
 }
 
 #fb {
