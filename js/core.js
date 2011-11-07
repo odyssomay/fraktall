@@ -2,25 +2,16 @@
 const canvas = document.getElementById('draw_area')
 const ctx = canvas.getContext('2d');
 
-if (document.body.offsetWidth < 600) {
-	canvas.setAttribute('width', 300);
-	canvas.setAttribute('height', 300);
-}
-
 var center = [-1, 0];
 var scale = 300;
 
-if (canvas.width < 900) {
+if (document.body.offsetWidth < 500) {
+	canvas.setAttribute('width', 300);
+	canvas.setAttribute('height', 300);
 	scale = 120;
 }
 
 parse_hash = function() {
-	if ((! location.hash) || (location.hash.length === 0)) {
-		location.hash = 'scale=300_center=-1,0';
-		redraw();
-		return;
-	}
-
 	const h = location.hash,
 	      s = h.split('_'),
 	      scale_raw = s[0].split('scale=')[1],
@@ -34,6 +25,9 @@ parse_hash = function() {
 		          parseFloat(center_array_raw[1])];
 	}
 	redraw();
+}
+update_hash = function() {
+	location.hash = 'scale=' + scale + '_center=' + center;
 }
 
 var is_sharing = false;
@@ -439,12 +433,15 @@ refine_section = function(x, y, max_iterations, refine_iteration, sections_data)
  * http://mrob.com/pub/muency/automaticdwelllimit.html
  */
 draw_obj = function() {
-	var max_iterations = 50,
+	var max_iterations = 100,
 	    max_refine_iterations = 4,
 	    refine_iteration = 0,
 	    sections_data,
 	    new_draw_toggle = false;
+	if (canvas.width < 500)
+	       max_iterations = 20;	
 
+	console.log(max_iterations);
 	const draw_sections = function() {
 		const current_new_draw_toggle = new_draw_toggle;
 		var x = 0,
@@ -535,7 +532,7 @@ canvas.onclick = function (e) {
 	center = [scale_x(pos[0]), scale_y(pos[1])];
 	scale *= 3;
 	redraw();
-	location.hash = 'scale=' + scale + '_center=' + center;
+	update_hash();
 	clicking = false;
 }
 
@@ -546,5 +543,6 @@ window.onhashchange = function () {
 }
 
 document.getElementById('share_url').value = location.href;
+update_hash();
 parse_hash();
 
