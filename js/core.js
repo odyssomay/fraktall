@@ -442,63 +442,82 @@ draw_section = function(section_x, section_y, max_iterations, refine_iteration, 
 	return calculated;
 }
 
+refine_section = function(x, y, max_iterations, refine_iteration, sections_data) {
+	index = x + y * x_sections;
+	sections_data[index] = draw_section(x * section_size, y * section_size, max_iterations, refine_iteration, sections_data[index]);
+	return sections_data;
+}
+
 /*
  * setInterval idea from http://www.sitepoint.com/multi-threading-javascript/
  * Uses 'Successive Dwell Limit' explained here:
  * http://mrob.com/pub/muency/automaticdwelllimit.html
  */
-var new_draw_toggle = false;
-draw = function() {
-	const current_new_draw_toggle = new_draw_toggle;
-	var current_time = (new Date()).getTime();
+draw_obj = function() {
+	var max_iterations = 100,
+	    max_refine_iterations = 4,
+	    refine_iteration = 0,
+	    sections_data,
+	    new_draw_toggle = false;
 
-	var index;
-
-	var refine_iteration = 0;
-	var max_iterations = 100;
-	var x = 0;
-	var y = 0;
-
-	const sections_data = new Array(x_sections * y_sections);
-	
-	busy = false;
-	const timer = setInterval(function() {
-		if (! (new_draw_toggle === current_new_draw_toggle)) {
-			clearInterval(timer);
-			return;
-		}
-		if (!busy) {
-			busy = true;
-			if (x >= x_sections) {
-				if (y + 1 >= y_sections) {
-					x = 0;
-					y = 0;
-					refine_iteration += 1;
-					console.log('drawing took', ((new Date()).getTime() - current_time) / 1000, 'seconds');
-					current_time = (new Date()).getTime();
-					if (refine_iteration > 4) {
-						clearInterval(timer);
-						return;
+	const draw_sections = function() {
+		const current_new_draw_toggle = new_draw_toggle;
+		var x = 0,
+		    y = 0,
+		    current_time = (new Date()).getTime(),
+		    busy = false;
+		const timer = setInterval(function() {
+			if (! (new_draw_toggle === current_new_draw_toggle)) {
+				clearInterval(timer);
+				return;
+			}
+			if (!busy) {
+				busy = true;
+				if (x >= x_sections) {
+					if (y + 1 >= y_sections) {
+						x = 0;
+						y = 0;
+						refine_iteration += 1;
+						console.log('drawing took', ((new Date()).getTime() - current_time) / 1000, 'seconds');
+						current_time = (new Date()).getTime();
+						if (refine_iteration >= max_refine_iterations) {
+							clearInterval(timer);
+							console.log('finished drawing');
+							return;
+						}
+					}
+					else {
+						y += 1;
+						x = 0;
 					}
 				}
-				else {
-					y += 1;
-					x = 0;
-				}
+				index = x + y * x_sections;
+				sections_data[index] = draw_section(x * section_size, y * section_size, max_iterations, refine_iteration, sections_data[index]);
+				x += 1;
+				busy = false;
 			}
-			index = x + y * x_sections;
-			sections_data[index] = draw_section(x * section_size, y * section_size, max_iterations, refine_iteration, sections_data[index]);
-			x += 1;
-			busy = false;
-		}
-	}, 50);
-}
+		}, 50);
+	}
+	
+	refine = function() {
+		max_refine_iterations += 1;
+		draw_sections()
+	}
 
-redraw = function () {
-	new_draw_toggle = ! new_draw_toggle;
-	grey_image();
-	draw();
-}
+	draw = function() {
+		refine_iteration = 0;
+		max_refine_iterations = 4;
+		sections_data = new Array(section_size * section_size);
+		draw_sections();
+	}
+
+	redraw = function() {
+		new_draw_toggle = ! new_draw_toggle;
+		grey_image();
+		draw();
+	}
+
+}();
 
 /*
  * From: http://answers.oreilly.com/topic/1929-how-to-use-the-canvas-and-draw-elements-in-html5/
