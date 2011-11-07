@@ -57,14 +57,21 @@ a:hover {
 	height: 0;
 }
 
-#menu a {
+#menu a, #top_menu a {
 	margin: 5px;
 	color: #AAA;
 }
 
-#menu a:hover {
+#menu a:hover, #top_menu a:hover {
 	color: #888;
 	cursor: pointer;
+}
+
+#top_menu {
+	height: 0;
+	position: absolute;
+	right: 30px;
+	top: 8px;
 }
 
 #footer {
@@ -87,8 +94,10 @@ canvas {
 #view { 
 	border: 30px solid #666;
 	width: 900px;
-	border-radius: 20px;
 	background: black;
+	-webkit-border-radius: 20px;
+	-moz-border-radius: 20px;
+	border-radius: 20px;
 }
 
 #footer a {
