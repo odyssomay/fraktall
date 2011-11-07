@@ -125,13 +125,29 @@ canvas {
 		margin-bottom: 1em;
 	}
 	#container {
-		width: 360px;
+		width: 320px;
 	}
 	#view {
+		border-width: 10px;
 		width: 300px;
+		-webkit-border-radius: 8px;
+		-moz-border-radius: 8px;
+		border-radius: 8px;
 	}
 	#zoom_text {
 		height: 1.5em;
+	}
+	#menu {
+		color: #333;
+		top: 0.3em;
+		height: 1.5em;
+	}
+	#menu a {
+		color: #333;
+	}
+
+	#top_menu {
+		display: none;
 	}
 }
 
