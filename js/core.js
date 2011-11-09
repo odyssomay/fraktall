@@ -418,10 +418,12 @@ parse_hash = function() {
 	stop_drawing();
 	redraw();
 }
+
 update_hash = function() {
 	location.hash = 'scale=' + scale + '_center=' + center;
 }
-(function() {
+
+_JUNK_ = function() {
 	var is_sharing = false;
 	share = function(should_share) {
 		is_sharing = should_share;
@@ -436,7 +438,7 @@ update_hash = function() {
 	share_toggle = function() {
 		share(! is_sharing);
 	}
-}());
+}();
 
 /*
  * ====================================
@@ -467,19 +469,12 @@ function draw_section(section_x, section_y, max_iterations, refine_iteration, se
 	return calculated;
 }
 
-//console.log(draw_section);
-/*refine_section = function(x, y, max_iterations, refine_iteration, sections_data) {
-	index = x + y * x_sections;
-	sections_data[index] = draw_section(x * section_size, y * section_size, max_iterations, refine_iteration, sections_data[index]);
-	return sections_data;
-}*/
-
 /*
  * setInterval idea from http://www.sitepoint.com/multi-threading-javascript/
  * Uses 'Successive Dwell Limit' explained here:
  * http://mrob.com/pub/muency/automaticdwelllimit.html
  */
-(function() {
+_JUNK_ = function() {
 	var max_iterations = 100,
 	    max_refine_iterations = 4,
 	    refine_iteration = 0,
@@ -550,10 +545,10 @@ function draw_section(section_x, section_y, max_iterations, refine_iteration, se
 		new_draw_toggle = ! new_draw_toggle;
 	}
 
-}());
+}();
 
 var clicking = false;
-(function() {
+_JUNK_ = function() {
 	var mouse_down = false;
 	var start_position;
 	const selection_canvas = document.getElementById('selection_canvas'),
@@ -617,14 +612,14 @@ var clicking = false;
 	}
 
 	selection_canvas.onselectstart = function() { return false; } // if not, the crosshair becomes a text cursor (IE version)
-}());
+}();
 
 window.onhashchange = function () {
 	if (!clicking)
-		parse_hash()
+		parse_hash();
 	document.getElementById('share_url').value = location.href;
 }
 
-document.getElementById('share_url').value = location.href;
 parse_hash();
+document.getElementById('share_url').value = location.href;
 
