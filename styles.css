@@ -120,6 +120,7 @@ canvas {
 #share {
 	display: none;
 	position: absolute;
+	z-index: 20;
 	top: 100px;
 	width: 300px;
 	height: 100px;
