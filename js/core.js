@@ -415,26 +415,28 @@ parse_hash = function() {
 		center = [parseFloat(center_array_raw[0]),
 		          parseFloat(center_array_raw[1])];
 	}
+	stop_drawing();
 	redraw();
 }
 update_hash = function() {
 	location.hash = 'scale=' + scale + '_center=' + center;
 }
+(function() {
+	var is_sharing = false;
+	share = function(should_share) {
+		is_sharing = should_share;
+		share_dialog = document.getElementById('share');
+		if (should_share)
+	share_dialog.style.display = 'block';
+		else
+	share_dialog.style.display = 'none';
+	}
+	share(false);
 
-var is_sharing = false;
-share = function(should_share) {
-	is_sharing = should_share;
-	share_dialog = document.getElementById('share');
-	if (should_share)
-		share_dialog.style.display = 'block';
-	else
-		share_dialog.style.display = 'none';
-}
-share(false);
-
-share_toggle = function() {
-	share(! is_sharing);
-}
+	share_toggle = function() {
+		share(! is_sharing);
+	}
+}());
 
 /*
  * ====================================
