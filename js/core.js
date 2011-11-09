@@ -497,9 +497,12 @@ _JUNK_ = function() {
 	}
 
 	redraw = function() {
-		new_draw_toggle = ! new_draw_toggle;
 		grey_image();
 		draw();
+	}
+
+	stop_drawing = function() {
+		new_draw_toggle = ! new_draw_toggle;
 	}
 
 }();
@@ -561,6 +564,7 @@ _JUNK_ = function() {
 		if (mouse_down) {
 			mouse_down = false;
 			clear();
+			stop_drawing();
 			center = [scale_x(start_position[0] + selection_width / 2),
 			          scale_y(start_position[1] + selection_height / 2)];
 			if (selection_height < 5) {
