@@ -1,7 +1,7 @@
 html {
 	font-family: 'CantarellRegular';
 	font-size: 0.9em;
-	height: 100%;
+	min-height: 100%;
 	background: #CCC;
 	background: linear-gradient(top, #CCC, #777);
 	background: -webkit-linear-gradient(top, #CCC, #777);
