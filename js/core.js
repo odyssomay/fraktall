@@ -1,52 +1,25 @@
 
+/*
+ * ====================================
+ * GLOBAL
+ * ====================================
+ */
+
 const canvas = document.getElementById('draw_area')
 const ctx = canvas.getContext('2d');
+
+const section_size = 100;
+const x_sections = canvas.width / section_size;
+const y_sections = canvas.height / section_size;
 
 var center = [-1, 0];
 var scale = 300;
 
-if (document.body.offsetWidth < 500) {
-	canvas.setAttribute('width', 300);
-	canvas.setAttribute('height', 300);
-	scale = 120;
-}
-
-parse_hash = function() {
-	if (! location.hash) {
-		update_hash();
-	}
-	const h = location.hash,
-	      s = h.split('_'),
-	      scale_raw = s[0].split('scale=')[1],
-	      center_raw = s[1].split('center=')[1],
-	      center_array_raw = center_raw.split(',');
-	if(! isNaN(scale_raw)) {
-		scale = parseFloat(scale_raw);
-	}
-	if(! (isNaN(center_array_raw[0]) && isNaN(center_array_raw[1]))) {
-		center = [parseFloat(center_array_raw[0]),
-		          parseFloat(center_array_raw[1])];
-	}
-	redraw();
-}
-update_hash = function() {
-	location.hash = 'scale=' + scale + '_center=' + center;
-}
-
-var is_sharing = false;
-share = function(should_share) {
-	is_sharing = should_share;
-	share_dialog = document.getElementById('share');
-	if (should_share)
-		share_dialog.style.display = 'block';
-	else
-		share_dialog.style.display = 'none';
-}
-share(false);
-
-share_toggle = function() {
-	share(! is_sharing);
-}
+/*
+ * ====================================
+ * UTIL
+ * ====================================
+ */
 
 log2 = function(v) {
 	return Math.log(v) / Math.log(2);
@@ -133,12 +106,47 @@ function getPixel(imageData, x, y) {
 		d[index+2]];
 }
 
-get_iteration_color = function(iteration) {
-	r = (iteration * 5) % 255;
-	g = Math.log(iteration) % 255;
-	b = iteration % 255;
-	return [r,g,b];
+/* 
+ * Idea from http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
+ */
+grey_image = function() {
+	const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	const data = imageData.data;
+	for (var i = 0; i < data.length; i += 4) {
+		data[i]   += 10;
+		data[i+1] += 10;
+		data[i+2] += 10;
+	}
+	ctx.putImageData(imageData, 0, 0);
 }
+
+/*
+ * From: http://answers.oreilly.com/topic/1929-how-to-use-the-canvas-and-draw-elements-in-html5/
+ */
+function getCursorPosition(e) {
+	var x;
+	var y;
+	if (e.pageX || e.pageY) {
+		x = e.pageX;
+		y = e.pageY;
+	}
+	else {
+		x = e.clientX + document.body.scrollLeft +
+			document.documentElement.scrollLeft;
+		y = e.clientY + document.body.scrollTop +
+			document.documentElement.scrollTop;
+	}
+
+	x -= canvas.offsetLeft;
+	y -= canvas.offsetTop;
+	return [x, y];
+}
+
+/*
+ * ====================================
+ * CALCULATE
+ * ====================================
+ */
 
 scale_x = function(x) {
 	return (x - canvas.width / 2) / scale + center[0];
@@ -146,10 +154,6 @@ scale_x = function(x) {
 
 scale_y = function(y) {
 	return ((canvas.height - y) - canvas.height / 2) / scale + center[1];
-}
-
-complex_magnitude = function(a, b) {
-	return a*a + b*b;
 }
 
 /*
@@ -275,24 +279,6 @@ pixel_color = function(pixel_obj) {
 	return color;
 }
 
-const section_size = 100;
-const x_sections = canvas.width / section_size;
-const y_sections = canvas.height / section_size;
-
-/* 
- * Idea from http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
- */
-grey_image = function() {
-	const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-	const data = imageData.data;
-	for (var i = 0; i < data.length; i += 4) {
-		data[i]   += 10;
-		data[i+1] += 10;
-		data[i+2] += 10;
-	}
-	ctx.putImageData(imageData, 0, 0);
-}
-
 /*
  * Mariani/Silver optimization
  * http://mrob.com/pub/muency/marianisilveralgorithm.html
@@ -401,6 +387,61 @@ calculate_section = function(section_x, section_y, max_iterations, section_data)
 	return result;
 }
 
+/*
+ * ====================================
+ * UI
+ * ====================================
+ */
+
+if (document.body.offsetWidth < 500) {
+	canvas.setAttribute('width', 300);
+	canvas.setAttribute('height', 300);
+	scale = 120;
+}
+
+parse_hash = function() {
+	if (! location.hash) {
+		update_hash();
+	}
+	const h = location.hash,
+	      s = h.split('_'),
+	      scale_raw = s[0].split('scale=')[1],
+	      center_raw = s[1].split('center=')[1],
+	      center_array_raw = center_raw.split(',');
+	if(! isNaN(scale_raw)) {
+		scale = parseFloat(scale_raw);
+	}
+	if(! (isNaN(center_array_raw[0]) && isNaN(center_array_raw[1]))) {
+		center = [parseFloat(center_array_raw[0]),
+		          parseFloat(center_array_raw[1])];
+	}
+	redraw();
+}
+update_hash = function() {
+	location.hash = 'scale=' + scale + '_center=' + center;
+}
+
+var is_sharing = false;
+share = function(should_share) {
+	is_sharing = should_share;
+	share_dialog = document.getElementById('share');
+	if (should_share)
+		share_dialog.style.display = 'block';
+	else
+		share_dialog.style.display = 'none';
+}
+share(false);
+
+share_toggle = function() {
+	share(! is_sharing);
+}
+
+/*
+ * ====================================
+ * DRAWING
+ * ====================================
+ */
+
 draw_section = function(section_x, section_y, max_iterations, refine_iteration, section_data) {
 	var calculated;
 	if (section_data)
@@ -506,28 +547,6 @@ _JUNK_ = function() {
 	}
 
 }();
-
-/*
- * From: http://answers.oreilly.com/topic/1929-how-to-use-the-canvas-and-draw-elements-in-html5/
- */
-function getCursorPosition(e) {
-	var x;
-	var y;
-	if (e.pageX || e.pageY) {
-		x = e.pageX;
-		y = e.pageY;
-	}
-	else {
-		x = e.clientX + document.body.scrollLeft +
-			document.documentElement.scrollLeft;
-		y = e.clientY + document.body.scrollTop +
-			document.documentElement.scrollTop;
-	}
-
-	x -= canvas.offsetLeft;
-	y -= canvas.offsetTop;
-	return [x, y];
-}
 
 var clicking = false;
 _JUNK_ = function() {
