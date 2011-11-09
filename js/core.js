@@ -300,6 +300,8 @@ pixel_color = function(pixel_obj) {
  */
 calculate_section_rectangular = function(section_x, section_y, data, refine_iteration, max_iterations) {
 	const calculate_inner_section = function(rel_x, rel_y, width, height) {	
+		var draw_all = false,
+		    first_value = calculate_relative(0,0);
 		const is_equal = function(v1, v2) {
 			return ((v1.escaped === v2.escaped) && (v1.iteration === v2.iteration));
 		}
@@ -344,23 +346,15 @@ calculate_section_rectangular = function(section_x, section_y, data, refine_iter
 			return;
 		}
 
-		var first_value = calculate_relative(0,0),
-		    draw_all = false,
-		    index_top, index_bottom;
-
 		for (var x = 0; x < width ; x++) {
 			set_and_check_value(x, 0);
 			set_and_check_value(x, height - 1);
 		}
-
-		var index_left, index_right;
-		if (! draw_all) {
-			for (var y = 0; y < height; y++) {
-				set_and_check_value(0, y);
-				set_and_check_value(width - 1, y);
-			}
-		}
-
+		for (var y = 0; y < height; y++) {
+			set_and_check_value(0, y);
+			set_and_check_value(width - 1, y);
+		}	
+		
 		if (draw_all) {
 			const half_width = Math.floor(width / 2);
 			const half_height = Math.floor(height / 2);
@@ -461,7 +455,7 @@ _JUNK_ = function() {
  * ====================================
  */
 
-function draw_section(section_x, section_y, max_iterations, refine_iteration, section_data) {
+draw_section = function(section_x, section_y, max_iterations, refine_iteration, section_data) {
 	var calculated;
 	if (section_data)
 		calculated = section_data;
