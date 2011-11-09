@@ -444,7 +444,7 @@ update_hash = function() {
  * ====================================
  */
 
-draw_section = function(section_x, section_y, max_iterations, refine_iteration, section_data) {
+function draw_section(section_x, section_y, max_iterations, refine_iteration, section_data) {
 	var calculated;
 	if (section_data)
 		calculated = section_data;
@@ -460,25 +460,26 @@ draw_section = function(section_x, section_y, max_iterations, refine_iteration, 
 			index = x + y * section_size;
 			c = calculated[index];
 			color = pixel_color(c);
-			setPixel(section_imageData, x, y, color['red'], color['green'], color['blue'], 0xff)
+			setPixel(section_imageData, x, y, color['red'], color['green'], color['blue'], 0xff);
 		}
 	}
 	ctx.putImageData(section_imageData, section_x, section_y);
 	return calculated;
 }
 
-refine_section = function(x, y, max_iterations, refine_iteration, sections_data) {
+//console.log(draw_section);
+/*refine_section = function(x, y, max_iterations, refine_iteration, sections_data) {
 	index = x + y * x_sections;
 	sections_data[index] = draw_section(x * section_size, y * section_size, max_iterations, refine_iteration, sections_data[index]);
 	return sections_data;
-}
+}*/
 
 /*
  * setInterval idea from http://www.sitepoint.com/multi-threading-javascript/
  * Uses 'Successive Dwell Limit' explained here:
  * http://mrob.com/pub/muency/automaticdwelllimit.html
  */
-_JUNK_ = function() {
+(function() {
 	var max_iterations = 100,
 	    max_refine_iterations = 4,
 	    refine_iteration = 0,
@@ -520,7 +521,8 @@ _JUNK_ = function() {
 					}
 				}
 				index = x + y * x_sections;
-				sections_data[index] = draw_section(x * section_size, y * section_size, max_iterations, refine_iteration, sections_data[index]);
+				sections_data[index] = draw_section(x * section_size, y * section_size, 
+						max_iterations, refine_iteration, sections_data[index]);
 				x += 1;
 				busy = false;
 			}
@@ -548,10 +550,10 @@ _JUNK_ = function() {
 		new_draw_toggle = ! new_draw_toggle;
 	}
 
-}();
+}());
 
 var clicking = false;
-_JUNK_ = function() {
+(function() {
 	var mouse_down = false;
 	var start_position;
 	const selection_canvas = document.getElementById('selection_canvas'),
@@ -615,7 +617,7 @@ _JUNK_ = function() {
 	}
 
 	selection_canvas.onselectstart = function() { return false; } // if not, the crosshair becomes a text cursor (IE version)
-}();
+}());
 
 window.onhashchange = function () {
 	if (!clicking)
