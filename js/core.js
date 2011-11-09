@@ -566,6 +566,9 @@ _JUNK_ = function() {
 	      selection_canvas_ctx = selection_canvas.getContext('2d');
 	const selection_area = document.getElementById('selection_area');
 
+	selection_canvas.setAttribute('width', canvas.width);
+	selection_canvas.setAttribute('height', canvas.height);
+
 	selection_canvas_ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
 	selection_canvas_ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
 	const draw_rect = function(x1,y1,x2,y2) {
