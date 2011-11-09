@@ -148,12 +148,27 @@ function getCursorPosition(e) {
  * ====================================
  */
 
+scheme_plus = SchemeNumber.fn['+'];
+scheme_minus = SchemeNumber.fn['-'];
+scheme_div = SchemeNumber.fn['/'];
+scheme_mult = SchemeNumber.fn['*'];
+
 scale_x = function(x) {
 	return (x - canvas.width / 2) / scale + center[0];
 }
 
 scale_y = function(y) {
 	return ((canvas.height - y) - canvas.height / 2) / scale + center[1];
+}
+
+scale_x_arbitrary_precision = function(x) {
+	return scheme_plus(scheme_div(scheme_minus(x ,scheme_div(canvas.width, 2)), scale), 
+	                   center[0]);
+}
+
+scale_y_arbitrary_precision = function(y) {
+	return scheme_plus(scheme_div(scheme_minus(scheme_minus(canvas.height, y), scheme_div(canvas.height, 2)), scale),
+	                   center[1]);
 }
 
 /*
@@ -429,9 +444,9 @@ _JUNK_ = function() {
 		is_sharing = should_share;
 		share_dialog = document.getElementById('share');
 		if (should_share)
-	share_dialog.style.display = 'block';
+			share_dialog.style.display = 'block';
 		else
-	share_dialog.style.display = 'none';
+			share_dialog.style.display = 'none';
 	}
 	share(false);
 
