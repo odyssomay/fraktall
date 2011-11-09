@@ -12,6 +12,9 @@ if (document.body.offsetWidth < 500) {
 }
 
 parse_hash = function() {
+	if (! location.hash) {
+		update_hash();
+	}
 	const h = location.hash,
 	      s = h.split('_'),
 	      scale_raw = s[0].split('scale=')[1],
@@ -432,7 +435,7 @@ refine_section = function(x, y, max_iterations, refine_iteration, sections_data)
  * Uses 'Successive Dwell Limit' explained here:
  * http://mrob.com/pub/muency/automaticdwelllimit.html
  */
-draw_obj = function() {
+_JUNK_ = function() {
 	var max_iterations = 100,
 	    max_refine_iterations = 4,
 	    refine_iteration = 0,
@@ -486,7 +489,7 @@ draw_obj = function() {
 		draw_sections()
 	}
 
-	draw = function() {
+	const draw = function() {
 		refine_iteration = 0;
 		max_refine_iterations = 4;
 		sections_data = new Array(section_size * section_size);
@@ -524,17 +527,70 @@ function getCursorPosition(e) {
 }
 
 var clicking = false;
+_JUNK_ = function() {
+	var mouse_down = false;
+	var start_position;
+	const selection_canvas = document.getElementById('selection_canvas'),
+	      selection_canvas_ctx = selection_canvas.getContext('2d');
+	const selection_area = document.getElementById('selection_area');
 
-canvas.onclick = function (e) {
-	clicking = true;
-	share(false);
-	const pos = getCursorPosition(e);
-	center = [scale_x(pos[0]), scale_y(pos[1])];
-	scale *= 3;
-	redraw();
-	update_hash();
-	clicking = false;
-}
+	selection_canvas_ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+	selection_canvas_ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+	const draw_rect = function(x1,y1,x2,y2) {
+		selection_canvas_ctx.fillRect(x1,y1,x2,y2);
+		selection_canvas_ctx.strokeRect(x1,y1,x2,y2);
+	}
+	const clear = function() {
+		selection_canvas_ctx.clearRect(0,0,selection_canvas.width, selection_canvas.height);
+	}
+
+	const get_scale_factor = function() {
+		return Math.sqrt(Math.pow(selection_canvas.width, 2) / Math.pow(selection_canvas.height, 2) + 1)
+	}
+
+	selection_canvas.onmousedown = function(e) {
+		mouse_down = true;
+		share(false);
+		start_position = getCursorPosition(e);
+		selection_height = 0;
+		selection_width = 0;
+		return false; // if not, the crosshair becomes a text cursor
+	}
+
+	selection_canvas.onmouseup = function(e) {
+		if (mouse_down) {
+			mouse_down = false;
+			clear();
+			center = [scale_x(start_position[0] + selection_width / 2),
+			          scale_y(start_position[1] + selection_height / 2)];
+			if (selection_height < 5) {
+				scale *= 3;
+			}
+			else {
+				scale *= canvas.width / selection_width;
+			}
+			redraw();
+			clicking = true;
+			update_hash();
+			clicking = false;
+		}
+	}
+
+	selection_canvas.onmousemove = function(e) {
+		if (mouse_down) {
+			const current_position = getCursorPosition(e),
+			      cursor_width = current_position[0] - start_position[0],
+			      cursor_height = current_position[1] - start_position[1],
+			      distance = Math.sqrt(Math.pow(cursor_width, 2) + Math.pow(cursor_height, 2));
+			selection_height = distance / get_scale_factor();
+			selection_width = Math.sqrt(Math.pow(distance, 2) - Math.pow(selection_height, 2));
+			clear();
+			draw_rect(start_position[0], start_position[1], selection_width, selection_height);
+		}
+	}
+
+	selection_canvas.onselectstart = function() { return false; } // if not, the crosshair becomes a text cursor (IE version)
+}();
 
 window.onhashchange = function () {
 	if (!clicking)
@@ -543,6 +599,5 @@ window.onhashchange = function () {
 }
 
 document.getElementById('share_url').value = location.href;
-update_hash();
 parse_hash();
 
