@@ -147,12 +147,6 @@ function getCursorPosition(e) {
  * CALCULATE
  * ====================================
  */
-
-scheme_plus = SchemeNumber.fn['+'];
-scheme_minus = SchemeNumber.fn['-'];
-scheme_div = SchemeNumber.fn['/'];
-scheme_mult = SchemeNumber.fn['*'];
-
 scale_x = function(x) {
 	return (x - canvas.width / 2) / scale + center[0];
 }
@@ -160,6 +154,12 @@ scale_x = function(x) {
 scale_y = function(y) {
 	return ((canvas.height - y) - canvas.height / 2) / scale + center[1];
 }
+
+/*
+scheme_plus = SchemeNumber.fn['+'];
+scheme_minus = SchemeNumber.fn['-'];
+scheme_div = SchemeNumber.fn['/'];
+scheme_mult = SchemeNumber.fn['*'];
 
 scale_x_arbitrary_precision = function(x) {
 	return scheme_plus(scheme_div(scheme_minus(x ,scheme_div(canvas.width, 2)), scale), 
@@ -170,6 +170,7 @@ scale_y_arbitrary_precision = function(y) {
 	return scheme_plus(scheme_div(scheme_minus(scheme_minus(canvas.height, y), scheme_div(canvas.height, 2)), scale),
 	                   center[1]);
 }
+*/
 
 /*
  * Algorithm from http://en.wikipedia.org/wiki/Mandelbrot_set#For_programmers
@@ -300,8 +301,6 @@ pixel_color = function(pixel_obj) {
  */
 calculate_section_rectangular = function(section_x, section_y, data, refine_iteration, max_iterations) {
 	const calculate_inner_section = function(rel_x, rel_y, width, height) {	
-		var draw_all = false,
-		    first_value = calculate_relative(0,0);
 		const is_equal = function(v1, v2) {
 			return ((v1.escaped === v2.escaped) && (v1.iteration === v2.iteration));
 		}
@@ -335,6 +334,9 @@ calculate_section_rectangular = function(section_x, section_y, data, refine_iter
 			if (! is_equal(first_value, new_value))
 				draw_all = true;
 		}
+		
+		var draw_all = false,
+		    first_value = calculate_relative(0,0);
 
 		if ((width < 5) && (height < 5)) {
 			for (x = 0; x < width; x++) {
