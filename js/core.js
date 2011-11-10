@@ -148,7 +148,7 @@ canvas_zoom = function(context, scale, center) {
 	context.translate(context.canvas.width / (2 * scale) - center[0], context.canvas.height / (2 * scale) - center[1]);
 	context.drawImage(context.canvas, 0, 0);
 	context.restore();
-}
+};
 
 /*
  * ====================================
@@ -557,7 +557,7 @@ draw_section = function(section_x, section_y, max_iterations, refine_iteration, 
 	
 	refine = function() {
 		max_refine_iterations += 1;
-		draw_sections()
+		draw_sections();
 	};
 
 	draw = function() {
