@@ -222,7 +222,7 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
 	const result = {
 		c_a: c_a, c_b: c_b, iteration: iteration,
 		z_a: z_a, z_b: z_b, dz_a: dz_a, dz_b: dz_b
-	}
+	};
 
 	if (z_a * z_a + z_b * z_b > 4) { 
 		result.escaped = true;
@@ -303,16 +303,16 @@ calculate_section_rectangular = function(section_x, section_y, data, refine_iter
 	const calculate_inner_section = function(rel_x, rel_y, width, height) {	
 		const is_equal = function(v1, v2) {
 			return ((v1.escaped === v2.escaped) && (v1.iteration === v2.iteration));
-		}
+		};
 		const get_global_x = function(x) {
 			return section_x + x + rel_x;
-		}
+		};
 		const get_global_y = function(y) {
 			return section_y + y + rel_y;
-		}
+		};
 		const get_index = function(x, y) {
 			return x + rel_x + (y + rel_y) * section_size;
-		}
+		};
 		const calculate_relative = function(x, y) {
 			index = get_index(x, y);
 			var new_value = data[index];
@@ -326,14 +326,14 @@ calculate_section_rectangular = function(section_x, section_y, data, refine_iter
 			}
 			new_value.refine_iteration = refine_iteration;
 			return new_value;
-		}
+		};
 		const set_and_check_value = function(x, y) {
 			index = get_index(x, y);
 			var new_value = calculate_relative(x, y);
 			data[index] = new_value;
 			if (! is_equal(first_value, new_value))
 				draw_all = true;
-		}
+		};
 		
 		var draw_all = false,
 		    first_value = calculate_relative(0,0);
@@ -443,12 +443,12 @@ update_hash = function() {
 			share_dialog.style.display = 'block';
 		else
 			share_dialog.style.display = 'none';
-	}
+	};
 	share(false);
 
 	share_toggle = function() {
 		share(! is_sharing);
-	}
+	};
 }());
 
 /*
@@ -533,28 +533,28 @@ draw_section = function(section_x, section_y, max_iterations, refine_iteration, 
 				busy = false;
 			}
 		}, 50);
-	}
+	};
 	
 	refine = function() {
 		max_refine_iterations += 1;
 		draw_sections()
-	}
+	};
 
 	const draw = function() {
 		refine_iteration = 0;
 		max_refine_iterations = 4;
 		sections_data = new Array(section_size * section_size);
 		draw_sections();
-	}
+	};
 
 	redraw = function() {
 		grey_image();
 		draw();
-	}
+	};
 
 	stop_drawing = function() {
 		new_draw_toggle = ! new_draw_toggle;
-	}
+	};
 }());
 
 var clicking = false;
@@ -573,14 +573,14 @@ var clicking = false;
 	const draw_rect = function(x1,y1,x2,y2) {
 		selection_canvas_ctx.fillRect(x1,y1,x2,y2);
 		selection_canvas_ctx.strokeRect(x1,y1,x2,y2);
-	}
+	};
 	const clear = function() {
 		selection_canvas_ctx.clearRect(0,0,selection_canvas.width, selection_canvas.height);
-	}
+	};
 
 	const get_scale_factor = function() {
 		return Math.sqrt(Math.pow(selection_canvas.width, 2) / Math.pow(selection_canvas.height, 2) + 1)
-	}
+	};
 
 	selection_canvas.onmousedown = function(e) {
 		mouse_down = true;
@@ -589,7 +589,7 @@ var clicking = false;
 		selection_height = 0;
 		selection_width = 0;
 		return false; // if not, the crosshair becomes a text cursor
-	}
+	};
 
 	selection_canvas.onmouseup = function(e) {
 		if (mouse_down) {
@@ -609,7 +609,7 @@ var clicking = false;
 			update_hash();
 			clicking = false;
 		}
-	}
+	};
 
 	selection_canvas.onmousemove = function(e) {
 		if (mouse_down) {
@@ -622,9 +622,9 @@ var clicking = false;
 			clear();
 			draw_rect(start_position[0], start_position[1], selection_width, selection_height);
 		}
-	}
+	};
 
-	selection_canvas.onselectstart = function() { return false; } // if not, the crosshair becomes a text cursor (IE version)
+	selection_canvas.onselectstart = function() { return false; }; // if not, the crosshair becomes a text cursor (IE version)
 }());
 
 window.onhashchange = function () {
