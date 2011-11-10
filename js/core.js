@@ -430,9 +430,21 @@ parse_hash = function() {
 	redraw();
 };
 
-update_hash = function() {
-	location.hash = 'scale=' + scale + '_center=' + center;
-};
+(function() {
+	should_update = true;
+	update_hash = function(update) {
+		should_update = update;
+		location.hash = 'scale=' + scale + '_center=' + center;
+	};
+
+	window.onhashchange = function () {
+		if (should_update) {
+			parse_hash();
+		}
+		document.getElementById('share_url').value = location.href;
+		should_update = true;
+	};
+}());
 
 (function() {
 	var is_sharing = false;
@@ -605,9 +617,7 @@ var clicking = false;
 				scale *= canvas.width / selection_width;
 			}
 			redraw();
-			clicking = true;
-			update_hash();
-			clicking = false;
+			update_hash(false);
 		}
 	};
 
@@ -626,12 +636,6 @@ var clicking = false;
 
 	selection_canvas.onselectstart = function() { return false; }; // if not, the crosshair becomes a text cursor (IE version)
 }());
-
-window.onhashchange = function () {
-	if (!clicking)
-		parse_hash();
-	document.getElementById('share_url').value = location.href;
-};
 
 parse_hash();
 document.getElementById('share_url').value = location.href;
