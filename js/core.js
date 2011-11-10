@@ -434,7 +434,7 @@ update_hash = function() {
 	location.hash = 'scale=' + scale + '_center=' + center;
 };
 
-_JUNK_ = function() {
+(function() {
 	var is_sharing = false;
 	share = function(should_share) {
 		is_sharing = should_share;
@@ -449,7 +449,7 @@ _JUNK_ = function() {
 	share_toggle = function() {
 		share(! is_sharing);
 	}
-}();
+}());
 
 /*
  * ====================================
@@ -485,7 +485,7 @@ draw_section = function(section_x, section_y, max_iterations, refine_iteration, 
  * Uses 'Successive Dwell Limit' explained here:
  * http://mrob.com/pub/muency/automaticdwelllimit.html
  */
-_JUNK_ = function() {
+(function() {
 	var max_iterations = 100,
 	    max_refine_iterations = 4,
 	    refine_iteration = 0,
@@ -555,11 +555,10 @@ _JUNK_ = function() {
 	stop_drawing = function() {
 		new_draw_toggle = ! new_draw_toggle;
 	}
-
-}();
+}());
 
 var clicking = false;
-_JUNK_ = function() {
+(function() {
 	var mouse_down = false;
 	var start_position;
 	const selection_canvas = document.getElementById('selection_canvas'),
@@ -626,7 +625,7 @@ _JUNK_ = function() {
 	}
 
 	selection_canvas.onselectstart = function() { return false; } // if not, the crosshair becomes a text cursor (IE version)
-}();
+}());
 
 window.onhashchange = function () {
 	if (!clicking)
