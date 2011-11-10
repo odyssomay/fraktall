@@ -23,7 +23,7 @@ var scale = 300;
 
 log2 = function(v) {
 	return Math.log(v) / Math.log(2);
-}
+};
 
 /*
  * Float comparison, from:
@@ -33,7 +33,7 @@ float_equal = function(a, b, accuracy) {
 	if (!accuracy)
 		accuracy = 1e15;
 	return Math.abs(a - b) <= Math.abs(b) / accuracy;
-}
+};
 
 /*
  * From http://beej.us/blog/2010/02/html5s-canvas-part-ii-pixel-manipulation/ 
@@ -44,7 +44,7 @@ function setPixel(imageData, x, y, r, g, b, a) {
 	imageData.data[index+1] = g;
 	imageData.data[index+2] = b;
 	imageData.data[index+3] = a;
-}
+};
 
 /*
  * From http://jsres.blogspot.com/2008/01/convert-hsv-to-rgb-equivalent.html
@@ -104,7 +104,7 @@ function getPixel(imageData, x, y) {
 	return [d[index],
 	        d[index+1],
 		d[index+2]];
-}
+};
 
 /* 
  * Idea from http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
@@ -118,7 +118,7 @@ grey_image = function() {
 		data[i+2] += 10;
 	}
 	ctx.putImageData(imageData, 0, 0);
-}
+};
 
 /*
  * From: http://answers.oreilly.com/topic/1929-how-to-use-the-canvas-and-draw-elements-in-html5/
@@ -140,7 +140,7 @@ function getCursorPosition(e) {
 	x -= canvas.offsetLeft;
 	y -= canvas.offsetTop;
 	return [x, y];
-}
+};
 
 /*
  * ====================================
@@ -149,11 +149,11 @@ function getCursorPosition(e) {
  */
 scale_x = function(x) {
 	return (x - canvas.width / 2) / scale + center[0];
-}
+};
 
 scale_y = function(y) {
 	return ((canvas.height - y) - canvas.height / 2) / scale + center[1];
-}
+};
 
 /*
 scheme_plus = SchemeNumber.fn['+'];
@@ -239,7 +239,7 @@ calculate_pixel = function(x_raw, y_raw, max_iterations, data) {
 	}
 
 	return result;
-}
+};
 
 pixel_color = function(pixel_obj) {
 	var color = [];
@@ -293,7 +293,7 @@ pixel_color = function(pixel_obj) {
 		color = hsv2rgb(hue, saturation, (1 - value) / 2 + 0.1);
 	}
 	return color;
-}
+};
 
 /*
  * Mariani/Silver optimization
@@ -380,7 +380,7 @@ calculate_section_rectangular = function(section_x, section_y, data, refine_iter
 		}
 	}
 	calculate_inner_section(0, 0, section_size, section_size);
-}
+};
 
 calculate_section = function(section_x, section_y, max_iterations, section_data) {
 	var index;
@@ -396,7 +396,7 @@ calculate_section = function(section_x, section_y, max_iterations, section_data)
 		}
 	}
 	return result;
-}
+};
 
 /*
  * ====================================
@@ -408,7 +408,7 @@ if (document.body.offsetWidth < 500) {
 	canvas.setAttribute('width', 300);
 	canvas.setAttribute('height', 300);
 	scale = 120;
-}
+};
 
 parse_hash = function() {
 	if (! location.hash) {
@@ -428,11 +428,11 @@ parse_hash = function() {
 	}
 	stop_drawing();
 	redraw();
-}
+};
 
 update_hash = function() {
 	location.hash = 'scale=' + scale + '_center=' + center;
-}
+};
 
 _JUNK_ = function() {
 	var is_sharing = false;
@@ -478,7 +478,7 @@ draw_section = function(section_x, section_y, max_iterations, refine_iteration, 
 	}
 	ctx.putImageData(section_imageData, section_x, section_y);
 	return calculated;
-}
+};
 
 /*
  * setInterval idea from http://www.sitepoint.com/multi-threading-javascript/
@@ -632,7 +632,7 @@ window.onhashchange = function () {
 	if (!clicking)
 		parse_hash();
 	document.getElementById('share_url').value = location.href;
-}
+};
 
 parse_hash();
 document.getElementById('share_url').value = location.href;
