@@ -583,7 +583,7 @@ var clicking = false;
 	selection_canvas.setAttribute('width', canvas.width);
 	selection_canvas.setAttribute('height', canvas.height);
 
-	selection_canvas_ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+	selection_canvas_ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
 	selection_canvas_ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
 	const draw_rect = function(x1,y1,x2,y2) {
 		selection_canvas_ctx.fillRect(x1,y1,x2,y2);
@@ -611,10 +611,8 @@ var clicking = false;
 			mouse_down = false;
 			clear();
 			stop_drawing();
-			const pixel_center = [start_position[0] + selection_width / 2,
-			                      start_position[1] + selection_height / 2];
-			center = [scale_x(pixel_center[0]),
-			          scale_y(pixel_center[1])];
+			center = [scale_x(start_position[0]),
+			          scale_y(start_position[1])];
 			var scale_factor;
 			if (selection_height < 5) {
 				scale_factor = 3;
@@ -622,7 +620,7 @@ var clicking = false;
 			else {
 				scale_factor = canvas.width / selection_width;
 			}
-			canvas_zoom(ctx, scale_factor, pixel_center);
+			canvas_zoom(ctx, scale_factor, start_position);
 			scale *= scale_factor;
 			draw();
 			update_hash(false);
@@ -630,16 +628,27 @@ var clicking = false;
 	};
 
 	selection_canvas.onmousemove = function(e) {
+		var cursor_width, cursor_height;
 		if (mouse_down) {
-			const current_position = getCursorPosition(e),
-			      cursor_width = current_position[0] - start_position[0],
-			      cursor_height = current_position[1] - start_position[1],
-			      distance = Math.sqrt(Math.pow(cursor_width, 2) + Math.pow(cursor_height, 2));
-			selection_height = distance / get_scale_factor();
-			selection_width = Math.sqrt(Math.pow(distance, 2) - Math.pow(selection_height, 2));
-			clear();
-			draw_rect(start_position[0], start_position[1], selection_width, selection_height);
+			const current_position = getCursorPosition(e);
+			cursor_width = current_position[0] - start_position[0];
+			cursor_height = current_position[1] - start_position[1];
 		}
+		else {
+			start_position = getCursorPosition(e);
+			cursor_width = selection_canvas.width / 6;
+			cursor_height = selection_canvas.height / 6;
+		}
+		distance = 2 * ( Math.sqrt(Math.pow(cursor_width, 2) + Math.pow(cursor_height, 2)));
+		selection_height = distance / get_scale_factor();
+		selection_width = Math.sqrt(Math.pow(distance, 2) - Math.pow(selection_height, 2));
+		clear();
+		draw_rect(start_position[0] - selection_width / 2, start_position[1] - selection_height / 2, selection_width, selection_height);
+	};
+
+	selection_canvas.onmouseout = function(e) {
+		clear();
+		mouse_down = false;
 	};
 
 	selection_canvas.onselectstart = function() { return false; }; // if not, the crosshair becomes a text cursor (IE version)
