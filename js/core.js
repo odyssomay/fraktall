@@ -142,6 +142,14 @@ function getCursorPosition(e) {
 	return [x, y];
 };
 
+canvas_zoom = function(context, scale, center) {
+	context.save();
+	context.scale(scale, scale);
+	context.translate(context.canvas.width / (2 * scale) - center[0], context.canvas.height / (2 * scale) - center[1]);
+	context.drawImage(context.canvas, 0, 0);
+	context.restore();
+}
+
 /*
  * ====================================
  * CALCULATE
@@ -427,7 +435,7 @@ parse_hash = function() {
 		          parseFloat(center_array_raw[1])];
 	}
 	stop_drawing();
-	redraw();
+	draw();
 };
 
 (function() {
@@ -552,16 +560,11 @@ draw_section = function(section_x, section_y, max_iterations, refine_iteration, 
 		draw_sections()
 	};
 
-	const draw = function() {
+	draw = function() {
 		refine_iteration = 0;
 		max_refine_iterations = 4;
 		sections_data = new Array(section_size * section_size);
 		draw_sections();
-	};
-
-	redraw = function() {
-		grey_image();
-		draw();
 	};
 
 	stop_drawing = function() {
@@ -608,15 +611,20 @@ var clicking = false;
 			mouse_down = false;
 			clear();
 			stop_drawing();
-			center = [scale_x(start_position[0] + selection_width / 2),
-			          scale_y(start_position[1] + selection_height / 2)];
+			const pixel_center = [start_position[0] + selection_width / 2,
+			                      start_position[1] + selection_height / 2];
+			center = [scale_x(pixel_center[0]),
+			          scale_y(pixel_center[1])];
+			var scale_factor;
 			if (selection_height < 5) {
-				scale *= 3;
+				scale_factor = 3;
 			}
 			else {
-				scale *= canvas.width / selection_width;
+				scale_factor = canvas.width / selection_width;
 			}
-			redraw();
+			canvas_zoom(ctx, scale_factor, pixel_center);
+			scale *= scale_factor;
+			draw();
 			update_hash(false);
 		}
 	};
